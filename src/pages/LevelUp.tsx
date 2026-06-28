@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Zap, Flame, Trophy, Star, Brain, ChevronDown, ChevronUp } from 'lucide-react';
+import { Zap, Flame, Trophy, Star, Brain, ChevronDown, ChevronUp, BookOpen } from 'lucide-react';
 import { UserProfile, DailyLog, Routine } from '../types';
 import { getLevelInfo, LEVELS, getRoutineCompletionRate } from '../utils/xp';
 import { getTodayString } from '../utils/dates';
 import { XPBar } from '../components/XPBar';
 import { BadgeGrid } from '../components/BadgeGrid';
 import { ADHD_INSIGHTS, mapRoutineToInsightId, type AdhdInsight } from '../data/adhdContent';
+import { READING_PIECES, type ReadingPiece, type UserPattern } from '../data/adhdReading';
 
 interface LevelUpProps {
   profile: UserProfile;
@@ -65,6 +66,107 @@ function InsightCard({ insight }: { insight: AdhdInsight }) {
   );
 }
 
+function ReadingCard({ piece, pattern }: { piece: ReadingPiece; pattern: UserPattern }) {
+  const [expanded, setExpanded] = useState(false);
+  const { isRelevant, personalNote } = piece.checkRelevance(pattern);
+
+  return (
+    <div
+      className="rounded-xl overflow-hidden"
+      style={{ backgroundColor: '#0A0A0F', border: `1px solid ${isRelevant ? piece.color + '40' : '#1E1E2E'}` }}
+    >
+      <button
+        className="w-full flex items-start gap-3 px-4 py-3 text-left"
+        onClick={() => setExpanded((e) => !e)}
+        style={{ WebkitTapHighlightColor: 'transparent' }}
+      >
+        <div
+          style={{
+            width: '8px',
+            height: '8px',
+            borderRadius: '50%',
+            backgroundColor: piece.color,
+            flexShrink: 0,
+            marginTop: '5px',
+          }}
+        />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <p style={{ fontFamily: '"Bebas Neue", sans-serif', fontSize: '16px', color: piece.color, letterSpacing: '0.06em' }}>
+              {piece.title.toUpperCase()}
+            </p>
+            {isRelevant && (
+              <span
+                style={{
+                  fontFamily: 'Inter, sans-serif',
+                  fontSize: '9px',
+                  fontWeight: 700,
+                  color: piece.color,
+                  backgroundColor: piece.color + '20',
+                  borderRadius: '4px',
+                  padding: '2px 6px',
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                RELEVANT TO YOU
+              </span>
+            )}
+          </div>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '11px', color: '#6C757D', marginTop: '2px', lineHeight: '1.4' }}>
+            {piece.teaser}
+          </p>
+        </div>
+        <div style={{ flexShrink: 0, marginTop: '2px' }}>
+          {expanded ? <ChevronUp size={16} color="#6C757D" /> : <ChevronDown size={16} color="#6C757D" />}
+        </div>
+      </button>
+
+      {expanded && (
+        <div style={{ borderTop: `1px solid ${piece.color}20`, padding: '14px 16px 16px' }}>
+          {isRelevant && personalNote && (
+            <div
+              className="rounded-lg px-3 py-2 mb-4"
+              style={{ backgroundColor: piece.color + '12', border: `1px solid ${piece.color}30` }}
+            >
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '10px', fontWeight: 700, color: piece.color, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '4px' }}>
+                YOUR PATTERN
+              </p>
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', color: '#F8F9FA', lineHeight: '1.5', opacity: 0.9 }}>
+                {personalNote}
+              </p>
+            </div>
+          )}
+
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '10px', fontWeight: 700, color: '#6C757D', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '10px' }}>
+            THE SCIENCE
+          </p>
+          <div className="space-y-3 mb-4">
+            {piece.body.map((para, i) => (
+              <p key={i} style={{ fontFamily: 'Inter, sans-serif', fontSize: '13px', color: '#F8F9FA', lineHeight: '1.6', opacity: 0.85 }}>
+                {para}
+              </p>
+            ))}
+          </div>
+
+          <div
+            className="rounded-lg px-3 py-2"
+            style={{ backgroundColor: '#13131A', border: '1px solid #1E1E2E' }}
+          >
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '10px', fontWeight: 700, color: '#FFD166', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '4px' }}>
+              KEY TAKEAWAY
+            </p>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', color: '#F8F9FA', lineHeight: '1.5', fontWeight: 500 }}>
+              {piece.keyTakeaway}
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function LevelUp({ profile, logs, routines }: LevelUpProps) {
   const today = getTodayString();
   const levelInfo = getLevelInfo(profile.totalXP);
@@ -99,6 +201,36 @@ export function LevelUp({ profile, logs, routines }: LevelUpProps) {
   // If no struggle data, show first 2 insights as general education
   const displayInsights = topInsights.length > 0 ? topInsights : ADHD_INSIGHTS.slice(0, 2);
   const hasPersonalizedData = daysActive >= 7 && topInsights.length > 0;
+
+  // Build user pattern for reading relevance checks
+  const avgRate =
+    routineRates.length > 0
+      ? routineRates.reduce((s, x) => s + x.rate, 0) / routineRates.length
+      : 0;
+  const morningRates = routineRates.filter((x) => x.routine.timeOfDay === 'morning');
+  const eveningRates = routineRates.filter((x) => x.routine.timeOfDay === 'evening');
+  const pillarRates: Record<string, number> = {};
+  for (const x of routineRates) {
+    if (pillarRates[x.routine.pillarId] === undefined) {
+      const group = routineRates.filter((r) => r.routine.pillarId === x.routine.pillarId);
+      pillarRates[x.routine.pillarId] = group.reduce((s, r) => s + r.rate, 0) / group.length;
+    }
+  }
+  const userPattern: UserPattern = {
+    overallRate: avgRate,
+    morningRate: morningRates.length > 0 ? morningRates.reduce((s, x) => s + x.rate, 0) / morningRates.length : null,
+    eveningRate: eveningRates.length > 0 ? eveningRates.reduce((s, x) => s + x.rate, 0) / eveningRates.length : null,
+    pillarRates,
+    daysActive,
+  };
+
+  // Sort reading pieces: relevant ones first
+  const sortedReading = [...READING_PIECES].sort((a, b) => {
+    const aRel = a.checkRelevance(userPattern).isRelevant ? 0 : 1;
+    const bRel = b.checkRelevance(userPattern).isRelevant ? 0 : 1;
+    return aRel - bRel;
+  });
+  const relevantCount = sortedReading.filter((p) => p.checkRelevance(userPattern).isRelevant).length;
 
   return (
     <div className="px-4 py-4 space-y-5 overflow-x-hidden">
@@ -443,6 +575,37 @@ export function LevelUp({ profile, logs, routines }: LevelUpProps) {
         <div className="mt-3 space-y-2">
           {ADHD_INSIGHTS.filter((i) => !displayInsights.find((d) => d.id === i.id)).map((insight) => (
             <InsightCard key={insight.id} insight={insight} />
+          ))}
+        </div>
+      </div>
+
+      {/* Learn About Yourself */}
+      <div>
+        <div className="flex items-center gap-2 mb-1">
+          <BookOpen size={16} color="#FFD166" />
+          <p
+            style={{
+              fontFamily: 'Inter, sans-serif',
+              fontSize: '11px',
+              fontWeight: 700,
+              color: '#6C757D',
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+            }}
+          >
+            LEARN ABOUT YOURSELF
+          </p>
+        </div>
+
+        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', color: '#6C757D', marginBottom: '12px', lineHeight: '1.5' }}>
+          {relevantCount > 0
+            ? `${relevantCount} piece${relevantCount !== 1 ? 's' : ''} matched to your data — shown first.`
+            : 'Research-backed reading on how your ADHD brain actually works.'}
+        </p>
+
+        <div className="space-y-2">
+          {sortedReading.map((piece) => (
+            <ReadingCard key={piece.id} piece={piece} pattern={userPattern} />
           ))}
         </div>
       </div>
