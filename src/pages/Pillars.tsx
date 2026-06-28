@@ -14,6 +14,7 @@ interface PillarsProps {
   onAddRoutine: (routine: Omit<Routine, 'id' | 'createdAt'>) => void;
   onEditRoutine: (routineId: string, updates: Omit<Routine, 'id' | 'createdAt'>) => void;
   onDeleteRoutine: (routineId: string) => void;
+  onClearPillar: (pillarId: string) => void;
 }
 
 export function Pillars({
@@ -25,6 +26,7 @@ export function Pillars({
   onAddRoutine,
   onEditRoutine,
   onDeleteRoutine,
+  onClearPillar,
 }: PillarsProps) {
   const today = getTodayString();
   const adaptedDifficulties: Record<string, Routine['difficulty']> = {};
@@ -82,6 +84,7 @@ export function Pillars({
           onAddRoutine={handleAddRoutine}
           onEditRoutine={handleEditRoutine}
           onDeleteRoutine={onDeleteRoutine}
+          onClearPillar={onClearPillar}
         />
       ))}
 

@@ -153,6 +153,13 @@ export default function App() {
     [setRoutines]
   );
 
+  const handleClearPillar = useCallback(
+    (pillarId: string) => {
+      setRoutines((prev) => prev.filter((r) => r.pillarId !== pillarId));
+    },
+    [setRoutines]
+  );
+
   const handleDataReset = useCallback(() => {
     window.location.reload();
   }, []);
@@ -185,6 +192,7 @@ export default function App() {
             onAddRoutine={handleAddRoutine}
             onEditRoutine={handleEditRoutine}
             onDeleteRoutine={handleDeleteRoutine}
+            onClearPillar={handleClearPillar}
           />
         );
       case 'stats':
