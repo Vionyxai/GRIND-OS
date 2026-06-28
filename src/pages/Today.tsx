@@ -5,11 +5,13 @@ import { MomentumRing } from '../components/MomentumRing';
 import { RoutineCard } from '../components/RoutineCard';
 import { getDailyQuote } from '../data/quotes';
 import { getTodayString, formatDisplayDate } from '../utils/dates';
+import { getAdaptedDifficulty } from '../utils/xp';
 
 interface TodayProps {
   routines: Routine[];
   pillars: Pillar[];
   todayLog: DailyLog;
+  logs: DailyLog[];
   profile: UserProfile;
   onToggleRoutine: (routineId: string) => void;
 }
@@ -22,8 +24,14 @@ const TIME_LABELS: Record<Routine['timeOfDay'], string> = {
   anytime: 'ANYTIME',
 };
 
-export function Today({ routines, pillars, todayLog, profile, onToggleRoutine }: TodayProps) {
+export function Today({ routines, pillars, todayLog, logs, profile, onToggleRoutine }: TodayProps) {
   const today = getTodayString();
+
+  // Compute adaptive difficulties from completion history
+  const adaptedDifficulties: Record<string, Routine['difficulty']> = {};
+  routines.forEach((r) => {
+    adaptedDifficulties[r.id] = getAdaptedDifficulty(r.id, r.createdAt, logs, r.difficulty, today);
+  });
   const quote = getDailyQuote(today);
   const activeRoutines = routines.filter((r) => r.isActive);
   const completedCount = todayLog.completedRoutineIds.length;
@@ -300,6 +308,7 @@ export function Today({ routines, pillars, todayLog, profile, onToggleRoutine }:
                       pillarColor={getPillarColor(routine.pillarId)}
                       isCompleted={todayLog.completedRoutineIds.includes(routine.id)}
                       onToggle={() => onToggleRoutine(routine.id)}
+                      adaptedDifficulty={adaptedDifficulties[routine.id]}
                     />
                   ))}
                 </div>

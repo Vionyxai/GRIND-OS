@@ -1,4 +1,4 @@
-import { Routine } from '../types';
+import { Routine, DailyLog } from '../types';
 
 export const XP_VALUES: Record<Routine['difficulty'], number> = {
   easy: 10,
@@ -71,4 +71,53 @@ export function calculateXP(completedRoutines: Routine[]): number {
   return completedRoutines.reduce((total, routine) => {
     return total + (XP_VALUES[routine.difficulty] ?? 0);
   }, 0);
+}
+
+// Returns completion-rate-based difficulty after enough data points (min 5 historical logs)
+// Rate >= 75% -> easy (you've mastered it), 35-75% -> medium, < 35% -> hard (reward the struggle)
+export function getAdaptedDifficulty(
+  routineId: string,
+  createdAt: string,
+  logs: DailyLog[],
+  fallback: Routine['difficulty'],
+  todayDate: string
+): Routine['difficulty'] {
+  const createdDate = createdAt.slice(0, 10);
+  const historicalLogs = logs
+    .filter((l) => l.date !== todayDate && l.date >= createdDate)
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(-30);
+
+  if (historicalLogs.length < 5) return fallback;
+
+  const completions = historicalLogs.filter((l) =>
+    l.completedRoutineIds.includes(routineId)
+  ).length;
+  const rate = completions / historicalLogs.length;
+
+  if (rate >= 0.75) return 'easy';
+  if (rate >= 0.35) return 'medium';
+  return 'hard';
+}
+
+// Compute a completion rate (0-1) for a routine over the last N historical logs
+export function getRoutineCompletionRate(
+  routineId: string,
+  createdAt: string,
+  logs: DailyLog[],
+  todayDate: string,
+  maxLogs = 30
+): number | null {
+  const createdDate = createdAt.slice(0, 10);
+  const historicalLogs = logs
+    .filter((l) => l.date !== todayDate && l.date >= createdDate)
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(-maxLogs);
+
+  if (historicalLogs.length < 5) return null;
+
+  const completions = historicalLogs.filter((l) =>
+    l.completedRoutineIds.includes(routineId)
+  ).length;
+  return completions / historicalLogs.length;
 }

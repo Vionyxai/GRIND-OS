@@ -1,4 +1,4 @@
-import { Check, Clock, AlertTriangle } from 'lucide-react';
+import { Check, Clock, AlertTriangle, Activity } from 'lucide-react';
 import { Routine } from '../types';
 import { XP_VALUES } from '../utils/xp';
 import { getTodayString, daysBetween } from '../utils/dates';
@@ -8,6 +8,7 @@ interface RoutineCardProps {
   pillarColor: string;
   isCompleted: boolean;
   onToggle: () => void;
+  adaptedDifficulty?: Routine['difficulty'];
 }
 
 const DIFFICULTY_COLORS: Record<Routine['difficulty'], string> = {
@@ -20,6 +21,24 @@ const DIFFICULTY_LABELS: Record<Routine['difficulty'], string> = {
   easy: 'EASY',
   medium: 'MED',
   hard: 'HARD',
+};
+
+const ACTIVITY_LABELS: Record<string, string> = {
+  gym: 'GYM',
+  outdoor: 'OUTDOOR',
+  sport: 'SPORT',
+  creative: 'CREATIVE',
+  social: 'SOCIAL',
+  rest: 'REST',
+};
+
+const ACTIVITY_COLORS: Record<string, string> = {
+  gym: '#06D6A0',
+  outdoor: '#4CC9F0',
+  sport: '#E63946',
+  creative: '#F72585',
+  social: '#FFD166',
+  rest: '#7209B7',
 };
 
 function formatTime12(time24: string): string {
@@ -42,9 +61,17 @@ function getDeadlineState(deadline: string): { label: string; color: string } | 
   return null;
 }
 
-export function RoutineCard({ routine, pillarColor, isCompleted, onToggle }: RoutineCardProps) {
-  const xp = XP_VALUES[routine.difficulty];
-  const diffColor = DIFFICULTY_COLORS[routine.difficulty];
+export function RoutineCard({
+  routine,
+  pillarColor,
+  isCompleted,
+  onToggle,
+  adaptedDifficulty,
+}: RoutineCardProps) {
+  const effectiveDifficulty = adaptedDifficulty ?? routine.difficulty;
+  const isAdapted = adaptedDifficulty !== undefined && adaptedDifficulty !== routine.difficulty;
+  const xp = XP_VALUES[effectiveDifficulty];
+  const diffColor = DIFFICULTY_COLORS[effectiveDifficulty];
   const deadlineState = routine.deadline ? getDeadlineState(routine.deadline) : null;
   const hasTimeBlock = !!routine.timeBlock;
 
@@ -106,7 +133,7 @@ export function RoutineCard({ routine, pillarColor, isCompleted, onToggle }: Rou
 
           {/* Meta row */}
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Difficulty */}
+            {/* Difficulty — adapted or manual */}
             <span
               style={{
                 fontFamily: 'Inter, sans-serif',
@@ -116,7 +143,19 @@ export function RoutineCard({ routine, pillarColor, isCompleted, onToggle }: Rou
                 letterSpacing: '0.06em',
               }}
             >
-              {DIFFICULTY_LABELS[routine.difficulty]}
+              {DIFFICULTY_LABELS[effectiveDifficulty]}
+              {isAdapted && (
+                <span
+                  style={{
+                    marginLeft: '3px',
+                    fontSize: '9px',
+                    color: isCompleted ? '#6C757D' : '#4CC9F0',
+                    fontWeight: 600,
+                  }}
+                >
+                  AUTO
+                </span>
+              )}
             </span>
             <span style={{ color: '#1E1E2E', fontSize: '10px' }}>·</span>
 
@@ -131,6 +170,26 @@ export function RoutineCard({ routine, pillarColor, isCompleted, onToggle }: Rou
             >
               +{xp} XP
             </span>
+
+            {/* Activity type (leisure routines) */}
+            {routine.activityType && (
+              <>
+                <span style={{ color: '#1E1E2E', fontSize: '10px' }}>·</span>
+                <span
+                  className="flex items-center gap-1"
+                  style={{
+                    fontFamily: 'Inter, sans-serif',
+                    fontSize: '10px',
+                    fontWeight: 700,
+                    color: isCompleted ? '#6C757D' : (ACTIVITY_COLORS[routine.activityType] ?? '#6C757D'),
+                    letterSpacing: '0.04em',
+                  }}
+                >
+                  <Activity size={9} />
+                  {ACTIVITY_LABELS[routine.activityType] ?? routine.activityType.toUpperCase()}
+                </span>
+              </>
+            )}
 
             {/* Time block */}
             {hasTimeBlock && routine.timeBlock && (

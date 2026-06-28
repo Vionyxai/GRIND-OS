@@ -1,3 +1,5 @@
+import { ActivityType } from '../types';
+
 export interface RoutineSuggestion {
   id: string;
   title: string;
@@ -8,6 +10,7 @@ export interface RoutineSuggestion {
   timeOfDay: 'morning' | 'afternoon' | 'evening' | 'anytime';
   suggestedTimeBlock?: { start: string; end: string };
   pillarId: string;
+  activityType?: ActivityType;
 }
 
 export const ADHD_SUGGESTIONS: RoutineSuggestion[] = [
@@ -81,9 +84,9 @@ export const ADHD_SUGGESTIONS: RoutineSuggestion[] = [
   // ── FOCUS STRUCTURE ─────────────────────────────────────────
   {
     id: 'sug-top3-tonight',
-    title: 'Write tomorrow\'s top 3 tonight',
+    title: "Write tomorrow's top 3 tonight",
     description: 'Before bed: write exactly 3 tasks for tomorrow. Not a list — just 3.',
-    whyItWorks: 'ADHD working memory can hold ~2 items at once (vs. 7 for neurotypicals). Externalizing tomorrow\'s priorities offloads cognitive load before sleep, reduces morning decision paralysis, and prevents the "staring at the ceiling at 2am" anxiety loop.',
+    whyItWorks: "ADHD working memory can hold ~2 items at once (vs. 7 for neurotypicals). Externalizing tomorrow's priorities offloads cognitive load before sleep, reduces morning decision paralysis, and prevents the 'staring at the ceiling at 2am' anxiety loop.",
     categoryLabel: 'Focus Structure',
     difficulty: 'easy',
     timeOfDay: 'evening',
@@ -104,7 +107,7 @@ export const ADHD_SUGGESTIONS: RoutineSuggestion[] = [
     id: 'sug-set-timer',
     title: 'Set timer before starting any task',
     description: 'Before beginning any work, set a visible timer. Even for 10 minutes.',
-    whyItWorks: 'Time blindness (temporal processing disorder) is a core ADHD symptom — not laziness. External timers create artificial time awareness that the ADHD brain doesn\'t generate internally. Analog timers (where you can see time passing) work better than digital.',
+    whyItWorks: "Time blindness (temporal processing disorder) is a core ADHD symptom — not laziness. External timers create artificial time awareness that the ADHD brain doesn't generate internally. Analog timers (where you can see time passing) work better than digital.",
     categoryLabel: 'Focus Structure',
     difficulty: 'easy',
     timeOfDay: 'anytime',
@@ -114,7 +117,7 @@ export const ADHD_SUGGESTIONS: RoutineSuggestion[] = [
     id: 'sug-one-tab',
     title: 'Single-tab work session',
     description: 'Close all extra browser tabs. One screen, one thing.',
-    whyItWorks: 'ADHD involves impaired inhibition of irrelevant stimuli — every visible option competes for attention equally. Reducing environmental complexity isn\'t just preference; it\'s a functional accommodation that can be the difference between 2 productive hours and 0.',
+    whyItWorks: "ADHD involves impaired inhibition of irrelevant stimuli — every visible option competes for attention equally. Reducing environmental complexity isn't just preference; it's a functional accommodation that can be the difference between 2 productive hours and 0.",
     categoryLabel: 'Focus Structure',
     difficulty: 'easy',
     timeOfDay: 'anytime',
@@ -124,7 +127,7 @@ export const ADHD_SUGGESTIONS: RoutineSuggestion[] = [
     id: 'sug-body-double',
     title: 'Body double session',
     description: 'Work alongside someone else (in person, video call, or via virtual body-doubling apps like Focusmate).',
-    whyItWorks: 'Body doubling is one of the most powerful ADHD-specific productivity tools. Another person\'s mere presence activates a different attentional system and provides enough external structure to sustain focus on tasks that feel impossible alone. Mechanism is still being studied but effectiveness is well-documented.',
+    whyItWorks: "Body doubling is one of the most powerful ADHD-specific productivity tools. Another person's mere presence activates a different attentional system and provides enough external structure to sustain focus on tasks that feel impossible alone. Mechanism is still being studied but effectiveness is well-documented.",
     categoryLabel: 'Focus Structure',
     difficulty: 'easy',
     timeOfDay: 'anytime',
@@ -157,7 +160,7 @@ export const ADHD_SUGGESTIONS: RoutineSuggestion[] = [
     id: 'sug-movement-break',
     title: 'Movement break every 90 min',
     description: 'Stand up, move for 5 minutes, every 90 minutes of sitting.',
-    whyItWorks: 'Ultradian rhythms naturally peak and trough every 90 min. ADHD brains struggle with the trough. Physical movement resets the cycle. This is the biological reason ADHD kids can\'t sit still — movement is self-regulating behavior, not misbehavior.',
+    whyItWorks: "Ultradian rhythms naturally peak and trough every 90 min. ADHD brains struggle with the trough. Physical movement resets the cycle. This is the biological reason ADHD kids can't sit still — movement is self-regulating behavior, not misbehavior.",
     categoryLabel: 'Body Regulation',
     difficulty: 'easy',
     timeOfDay: 'anytime',
@@ -179,7 +182,7 @@ export const ADHD_SUGGESTIONS: RoutineSuggestion[] = [
     id: 'sug-emotion-label',
     title: 'Name your emotion before reacting',
     description: 'When you feel activated, pause and say (even internally): "I feel ___."',
-    whyItWorks: 'Affect labeling — naming emotions — measurably reduces amygdala activation in fMRI studies. ADHD emotional dysregulation (including RSD — Rejection Sensitive Dysphoria) is partially a naming/recognition problem. This is not spiritual advice; it\'s neuroscience.',
+    whyItWorks: "Affect labeling — naming emotions — measurably reduces amygdala activation in fMRI studies. ADHD emotional dysregulation (including RSD — Rejection Sensitive Dysphoria) is partially a naming/recognition problem. This is not spiritual advice; it's neuroscience.",
     categoryLabel: 'Emotional Regulation',
     difficulty: 'easy',
     timeOfDay: 'anytime',
@@ -230,6 +233,74 @@ export const ADHD_SUGGESTIONS: RoutineSuggestion[] = [
     suggestedTimeBlock: { start: '18:00', end: '18:05' },
     pillarId: 'money',
   },
+
+  // ── LEISURE & PLAY ──────────────────────────────────────────
+  {
+    id: 'sug-outdoor-walk',
+    title: 'Outdoor walk or hike',
+    description: '20-60 min outside — nature, trail, or neighborhood. No destination required.',
+    whyItWorks: "Nature environments reduce cortisol and increase dopamine more than urban walks. 'Green exercise' (any movement outdoors) improves ADHD attention scores by 20% in studies. It's the cheapest, most available ADHD intervention available.",
+    categoryLabel: 'Leisure & Play',
+    difficulty: 'easy',
+    timeOfDay: 'anytime',
+    pillarId: 'leisure',
+    activityType: 'outdoor',
+  },
+  {
+    id: 'sug-gym-session',
+    title: 'Gym / strength training',
+    description: 'Any gym session — lifting, classes, cardio machines.',
+    whyItWorks: 'Resistance training boosts dopamine and BDNF (brain-derived neurotrophic factor) for 2-4 hours. Regular gym goers with ADHD show measurably better working memory, impulse control, and emotional regulation compared to non-exercisers.',
+    categoryLabel: 'Leisure & Play',
+    difficulty: 'medium',
+    timeOfDay: 'anytime',
+    pillarId: 'leisure',
+    activityType: 'gym',
+  },
+  {
+    id: 'sug-sport-pickup',
+    title: 'Sport or recreational activity',
+    description: 'Basketball, tennis, soccer, swimming, cycling — anything competitive or team-based.',
+    whyItWorks: 'Sport combines movement, novelty, social contact, and immediate feedback — four of the most powerful ADHD dopamine triggers simultaneously. Many adults with ADHD credit sports as their primary emotional regulation tool.',
+    categoryLabel: 'Leisure & Play',
+    difficulty: 'medium',
+    timeOfDay: 'anytime',
+    pillarId: 'leisure',
+    activityType: 'sport',
+  },
+  {
+    id: 'sug-creative-time',
+    title: 'Unstructured creative time',
+    description: 'Music, art, writing, cooking, building — anything creative with no goal or output required.',
+    whyItWorks: 'ADHD brains hyperfocus on high-interest creative activities, producing large dopamine releases. Scheduled "free play" as adults is one of the most underrated ADHD nervous system regulation tools. Creation without rules = default mode network activation + reward.',
+    categoryLabel: 'Leisure & Play',
+    difficulty: 'easy',
+    timeOfDay: 'anytime',
+    pillarId: 'leisure',
+    activityType: 'creative',
+  },
+  {
+    id: 'sug-social-connection',
+    title: 'Real social time',
+    description: 'In-person or voice call with someone you enjoy. Not texting. Actual conversation.',
+    whyItWorks: 'Social connection releases oxytocin, which modulates dopamine and reduces the hyperarousal common in ADHD. Voice and face-to-face contact is 4x more effective than text for nervous system co-regulation. Many ADHD adults are chronically under-connected while feeling too exhausted to reach out.',
+    categoryLabel: 'Leisure & Play',
+    difficulty: 'easy',
+    timeOfDay: 'anytime',
+    pillarId: 'leisure',
+    activityType: 'social',
+  },
+  {
+    id: 'sug-rest-day',
+    title: 'Intentional rest',
+    description: 'A full hour of guilt-free rest — nap, reading, watching something you enjoy. Nothing productive.',
+    whyItWorks: "ADHD brains burn more glucose managing inhibition and attention — rest isn't optional, it's recovery. Scheduled guilt-free rest reduces the shame spiral of unplanned collapse, and builds sustainable long-term energy instead of boom-bust cycles.",
+    categoryLabel: 'Leisure & Play',
+    difficulty: 'easy',
+    timeOfDay: 'anytime',
+    pillarId: 'leisure',
+    activityType: 'rest',
+  },
 ];
 
 export const SUGGESTION_CATEGORIES = [
@@ -238,6 +309,7 @@ export const SUGGESTION_CATEGORIES = [
   { id: 'body', label: 'Body Regulation', color: '#06D6A0' },
   { id: 'emotional', label: 'Emotional Regulation', color: '#F72585' },
   { id: 'evening', label: 'Evening Wind-Down', color: '#7209B7' },
+  { id: 'leisure', label: 'Leisure & Play', color: '#FF9F1C' },
 ] as const;
 
 export function getSuggestionsByCategory(categoryLabel: string): RoutineSuggestion[] {

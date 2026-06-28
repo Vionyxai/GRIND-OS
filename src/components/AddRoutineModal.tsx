@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, ChevronRight, Info } from 'lucide-react';
-import { Routine } from '../types';
+import { Routine, ActivityType } from '../types';
 import { DEFAULT_PILLARS } from '../data/pillars';
 import {
   ADHD_SUGGESTIONS,
@@ -22,6 +22,15 @@ type Tab = 'suggestions' | 'custom';
 
 const DIFFICULTIES: Difficulty[] = ['easy', 'medium', 'hard'];
 const TIMES: TimeOfDay[] = ['morning', 'afternoon', 'evening', 'anytime'];
+
+const ACTIVITY_TYPES: { id: ActivityType; label: string; color: string }[] = [
+  { id: 'gym', label: 'Gym', color: '#06D6A0' },
+  { id: 'outdoor', label: 'Outdoor', color: '#4CC9F0' },
+  { id: 'sport', label: 'Sport', color: '#E63946' },
+  { id: 'creative', label: 'Creative', color: '#F72585' },
+  { id: 'social', label: 'Social', color: '#FFD166' },
+  { id: 'rest', label: 'Rest', color: '#7209B7' },
+];
 
 const DIFF_COLORS: Record<Difficulty, string> = {
   easy: '#06D6A0',
@@ -208,6 +217,7 @@ export function AddRoutineModal({
   const [timeEnd, setTimeEnd] = useState('09:30');
   const [deadlineEnabled, setDeadlineEnabled] = useState(false);
   const [deadline, setDeadline] = useState('');
+  const [activityType, setActivityType] = useState<ActivityType>('gym');
 
   useEffect(() => {
     if (!isOpen) return;
@@ -223,6 +233,7 @@ export function AddRoutineModal({
       setTimeEnd(editingRoutine.timeBlock?.end ?? '09:30');
       setDeadlineEnabled(!!editingRoutine.deadline);
       setDeadline(editingRoutine.deadline ?? '');
+      setActivityType(editingRoutine.activityType ?? 'gym');
     } else {
       setTab('suggestions');
       setSelectedCategory(null);
@@ -236,6 +247,7 @@ export function AddRoutineModal({
       setTimeEnd('09:30');
       setDeadlineEnabled(false);
       setDeadline('');
+      setActivityType('gym');
     }
   }, [editingRoutine, initialPillarId, isOpen]);
 
@@ -252,6 +264,7 @@ export function AddRoutineModal({
       setTimeStart(s.suggestedTimeBlock.start);
       setTimeEnd(s.suggestedTimeBlock.end);
     }
+    if (s.activityType) setActivityType(s.activityType);
     setTab('custom');
   };
 
@@ -265,6 +278,7 @@ export function AddRoutineModal({
       timeOfDay,
       timeBlock: timeBlockEnabled ? { start: timeStart, end: timeEnd } : undefined,
       deadline: deadlineEnabled && deadline ? deadline : undefined,
+      activityType: pillarId === 'leisure' ? activityType : undefined,
       isActive: true,
     });
     onClose();
@@ -520,7 +534,7 @@ export function AddRoutineModal({
 
               {/* Difficulty */}
               <div>
-                <label style={labelStyle}>Difficulty</label>
+                <label style={labelStyle}>Starting Difficulty</label>
                 <div className="flex gap-2">
                   {DIFFICULTIES.map((d) => (
                     <button
@@ -541,11 +555,44 @@ export function AddRoutineModal({
                         cursor: 'pointer',
                       } as React.CSSProperties}
                     >
-                      {d === 'easy' ? 'Easy +10' : d === 'medium' ? 'Medium +25' : 'Hard +50'}
+                      {d === 'easy' ? 'Easy +10' : d === 'medium' ? 'Med +25' : 'Hard +50'}
                     </button>
                   ))}
                 </div>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '11px', color: '#6C757D', marginTop: '6px', lineHeight: '1.4' }}>
+                  XP adapts automatically to your real completion rate after 5+ days of data.
+                </p>
               </div>
+
+              {/* Activity Type (leisure pillar only) */}
+              {pillarId === 'leisure' && (
+                <div>
+                  <label style={labelStyle}>Activity Type</label>
+                  <div className="flex gap-2 flex-wrap">
+                    {ACTIVITY_TYPES.map((a) => (
+                      <button
+                        key={a.id}
+                        onClick={() => setActivityType(a.id)}
+                        style={{
+                          padding: '8px 14px',
+                          borderRadius: '8px',
+                          fontFamily: 'Inter, sans-serif',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          backgroundColor: activityType === a.id ? a.color + '25' : '#1E1E2E',
+                          color: activityType === a.id ? a.color : '#6C757D',
+                          border: `1px solid ${activityType === a.id ? a.color : '#1E1E2E'}`,
+                          minHeight: '40px',
+                          WebkitTapHighlightColor: 'transparent',
+                          cursor: 'pointer',
+                        } as React.CSSProperties}
+                      >
+                        {a.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Time of Day */}
               <div>

@@ -7,6 +7,7 @@ interface PillarCardProps {
   pillar: Pillar;
   routines: Routine[];
   completedIds: string[];
+  adaptedDifficulties?: Record<string, Routine['difficulty']>;
   onToggleRoutine: (routineId: string) => void;
   onAddRoutine: (pillarId: string) => void;
   onEditRoutine: (routine: Routine) => void;
@@ -17,6 +18,7 @@ export function PillarCard({
   pillar,
   routines,
   completedIds,
+  adaptedDifficulties,
   onToggleRoutine,
   onAddRoutine,
   onEditRoutine,
@@ -197,6 +199,7 @@ export function PillarCard({
                   pillarColor={pillar.color}
                   isCompleted={completedIds.includes(routine.id)}
                   onToggle={() => onToggleRoutine(routine.id)}
+                  adaptedDifficulty={adaptedDifficulties?.[routine.id]}
                 />
               )}
             </div>

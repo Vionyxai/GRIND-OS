@@ -27,7 +27,7 @@ const DEFAULT_PROFILE = {
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabName>('today');
-  const [pillars] = useLocalStorage<Pillar[]>(KEYS.PILLARS, DEFAULT_PILLARS);
+  const [pillars, setPillars] = useLocalStorage<Pillar[]>(KEYS.PILLARS, DEFAULT_PILLARS);
   const [routines, setRoutines] = useLocalStorage<Routine[]>(KEYS.ROUTINES, DEFAULT_ROUTINES);
   const { profile, setProfile, checkBadges, updateStreak } = useGamification();
 
@@ -41,6 +41,15 @@ export default function App() {
       localStorage.setItem(KEYS.LOGS, JSON.stringify([]));
       localStorage.setItem(KEYS.INITIALIZED, 'true');
     }
+  }, []);
+
+  // Migrate: add Leisure & Play pillar for existing users who don't have it
+  useEffect(() => {
+    setPillars((prev) => {
+      if (prev.find((p) => p.id === 'leisure')) return prev;
+      return [...prev, { id: 'leisure', name: 'Leisure & Play', color: '#FF9F1C' }];
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Get weekly avg completion for momentum calculation
@@ -160,6 +169,7 @@ export default function App() {
             routines={routines}
             pillars={pillars}
             todayLog={todayLog}
+            logs={logs}
             profile={profile}
             onToggleRoutine={handleToggleRoutine}
           />
@@ -169,6 +179,7 @@ export default function App() {
           <Pillars
             pillars={pillars}
             routines={routines}
+            logs={logs}
             completedIds={todayLog.completedRoutineIds}
             onToggleRoutine={handleToggleRoutine}
             onAddRoutine={handleAddRoutine}
@@ -179,7 +190,7 @@ export default function App() {
       case 'stats':
         return <Stats logs={logs} routines={routines} pillars={pillars} />;
       case 'levelup':
-        return <LevelUp profile={profile} logs={logs} />;
+        return <LevelUp profile={profile} logs={logs} routines={routines} />;
       case 'settings':
         return <Settings onDataReset={handleDataReset} onDataImport={handleDataImport} />;
       default:

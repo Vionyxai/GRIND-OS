@@ -1,8 +1,10 @@
 export interface Pillar {
   id: string;
-  name: 'Health & Body' | 'Money & Business' | 'Relationships' | 'Mental / Spiritual' | 'Skills & Learning';
+  name: 'Health & Body' | 'Money & Business' | 'Relationships' | 'Mental / Spiritual' | 'Skills & Learning' | 'Leisure & Play';
   color: string;
 }
+
+export type ActivityType = 'gym' | 'outdoor' | 'sport' | 'creative' | 'social' | 'rest';
 
 export interface TimeBlock {
   start: string; // "HH:MM" 24-hour
@@ -18,6 +20,7 @@ export interface Routine {
   timeOfDay: 'morning' | 'afternoon' | 'evening' | 'anytime';
   timeBlock?: TimeBlock;
   deadline?: string; // "YYYY-MM-DD"
+  activityType?: ActivityType;
   isActive: boolean;
   createdAt: string;
 }

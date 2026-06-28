@@ -1,3 +1,4 @@
+import { Activity } from 'lucide-react';
 import { DailyLog, Routine, Pillar } from '../types';
 import { getLast7Days, getLast14Days, getLast30Days, getShortDayLabel } from '../utils/dates';
 import {
@@ -57,6 +58,22 @@ export function Stats({ logs, routines, pillars }: StatsProps) {
     const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
     return { pillar, rate, completed, total };
   });
+
+  // Activity breakdown (last 30 days, leisure pillar only)
+  const leisureRoutines = activeRoutines.filter((r) => r.pillarId === 'leisure');
+  const activityTypeCounts: Record<string, number> = {};
+  const PHYSICAL_TYPES = ['gym', 'outdoor', 'sport'];
+  last30.forEach((date) => {
+    const log = logs.find((l) => l.date === date);
+    if (!log) return;
+    leisureRoutines.forEach((r) => {
+      if (r.activityType && log.completedRoutineIds.includes(r.id)) {
+        activityTypeCounts[r.activityType] = (activityTypeCounts[r.activityType] ?? 0) + 1;
+      }
+    });
+  });
+  const physicalDays = PHYSICAL_TYPES.reduce((sum, t) => sum + (activityTypeCounts[t] ?? 0), 0);
+  const hasLeisureData = leisureRoutines.length > 0;
 
   // Best weeks
   const logsWithData = logs.filter((l) => l.completedRoutineIds.length > 0);
@@ -297,6 +314,71 @@ export function Stats({ logs, routines, pillars }: StatsProps) {
           ))}
         </div>
       </div>
+
+      {/* Activity breakdown */}
+      {hasLeisureData && (
+        <div
+          className="rounded-xl p-4"
+          style={{ backgroundColor: '#13131A', border: '1px solid #1E1E2E' }}
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <Activity size={14} color="#FF9F1C" />
+            <p
+              style={{
+                fontFamily: 'Inter, sans-serif',
+                fontSize: '11px',
+                fontWeight: 700,
+                color: '#6C757D',
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+              }}
+            >
+              ACTIVE DAYS — 30 DAYS
+            </p>
+          </div>
+
+          {/* Physical total */}
+          <div
+            className="rounded-lg px-4 py-3 mb-3 flex items-center justify-between"
+            style={{ backgroundColor: '#0A0A0F', border: '1px solid #FF9F1C30' }}
+          >
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '13px', color: '#FF9F1C', fontWeight: 600 }}>
+              Physical Activity
+            </p>
+            <p style={{ fontFamily: '"Bebas Neue", sans-serif', fontSize: '22px', color: '#FF9F1C', letterSpacing: '0.04em' }}>
+              {physicalDays}
+              <span style={{ fontSize: '12px', color: '#6C757D', fontFamily: 'Inter, sans-serif', fontWeight: 400, marginLeft: '4px' }}>days</span>
+            </p>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { id: 'gym', label: 'GYM', color: '#06D6A0' },
+              { id: 'outdoor', label: 'OUTDOOR', color: '#4CC9F0' },
+              { id: 'sport', label: 'SPORT', color: '#E63946' },
+              { id: 'creative', label: 'CREATIVE', color: '#F72585' },
+              { id: 'social', label: 'SOCIAL', color: '#FFD166' },
+              { id: 'rest', label: 'REST', color: '#7209B7' },
+            ].map(({ id, label, color }) => {
+              const count = activityTypeCounts[id] ?? 0;
+              return (
+                <div
+                  key={id}
+                  className="rounded-lg p-3 text-center"
+                  style={{ backgroundColor: '#0A0A0F', border: `1px solid ${count > 0 ? color + '40' : '#1E1E2E'}` }}
+                >
+                  <p style={{ fontFamily: '"Bebas Neue", sans-serif', fontSize: '24px', color: count > 0 ? color : '#1E1E2E', letterSpacing: '0.04em' }}>
+                    {count}
+                  </p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '9px', color: count > 0 ? color : '#6C757D', fontWeight: 700, letterSpacing: '0.08em' }}>
+                    {label}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Best weeks */}
       {weekSummaries.length > 0 && (

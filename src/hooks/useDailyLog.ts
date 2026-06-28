@@ -3,7 +3,7 @@ import { DailyLog, Routine } from '../types';
 import { useLocalStorage } from './useLocalStorage';
 import { KEYS } from '../utils/storage';
 import { getTodayString } from '../utils/dates';
-import { XP_VALUES } from '../utils/xp';
+import { XP_VALUES, getAdaptedDifficulty } from '../utils/xp';
 import { calculateMomentum } from '../utils/momentum';
 
 function createEmptyLog(date: string): DailyLog {
@@ -41,7 +41,10 @@ export function useDailyLog(
       if (todayLog.completedRoutineIds.includes(routineId)) return;
 
       const routine = activeRoutines.find((r) => r.id === routineId);
-      const xpGain = routine ? XP_VALUES[routine.difficulty] : 0;
+      const adapted = routine
+        ? getAdaptedDifficulty(routine.id, routine.createdAt, logs, routine.difficulty, today)
+        : 'easy';
+      const xpGain = XP_VALUES[adapted];
 
       const newCompleted = [...todayLog.completedRoutineIds, routineId];
       const newXP = todayLog.xpEarned + xpGain;
@@ -59,7 +62,7 @@ export function useDailyLog(
         momentumScore: momentum,
       });
     },
-    [todayLog, activeRoutines, currentStreak, weeklyAvgCompletion, saveTodayLog]
+    [todayLog, activeRoutines, currentStreak, weeklyAvgCompletion, saveTodayLog, logs, today]
   );
 
   const uncompleteRoutine = useCallback(
@@ -67,7 +70,10 @@ export function useDailyLog(
       if (!todayLog.completedRoutineIds.includes(routineId)) return;
 
       const routine = activeRoutines.find((r) => r.id === routineId);
-      const xpLoss = routine ? XP_VALUES[routine.difficulty] : 0;
+      const adapted = routine
+        ? getAdaptedDifficulty(routine.id, routine.createdAt, logs, routine.difficulty, today)
+        : 'easy';
+      const xpLoss = XP_VALUES[adapted];
 
       const newCompleted = todayLog.completedRoutineIds.filter((id) => id !== routineId);
       const newXP = Math.max(0, todayLog.xpEarned - xpLoss);
@@ -85,7 +91,7 @@ export function useDailyLog(
         momentumScore: momentum,
       });
     },
-    [todayLog, activeRoutines, currentStreak, weeklyAvgCompletion, saveTodayLog]
+    [todayLog, activeRoutines, currentStreak, weeklyAvgCompletion, saveTodayLog, logs, today]
   );
 
   const isCompleted = useCallback(

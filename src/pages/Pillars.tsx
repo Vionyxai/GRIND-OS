@@ -1,11 +1,14 @@
 import { useState } from 'react';
-import { Pillar, Routine } from '../types';
+import { Pillar, Routine, DailyLog } from '../types';
 import { PillarCard } from '../components/PillarCard';
 import { AddRoutineModal } from '../components/AddRoutineModal';
+import { getAdaptedDifficulty } from '../utils/xp';
+import { getTodayString } from '../utils/dates';
 
 interface PillarsProps {
   pillars: Pillar[];
   routines: Routine[];
+  logs: DailyLog[];
   completedIds: string[];
   onToggleRoutine: (routineId: string) => void;
   onAddRoutine: (routine: Omit<Routine, 'id' | 'createdAt'>) => void;
@@ -16,12 +19,18 @@ interface PillarsProps {
 export function Pillars({
   pillars,
   routines,
+  logs,
   completedIds,
   onToggleRoutine,
   onAddRoutine,
   onEditRoutine,
   onDeleteRoutine,
 }: PillarsProps) {
+  const today = getTodayString();
+  const adaptedDifficulties: Record<string, Routine['difficulty']> = {};
+  routines.forEach((r) => {
+    adaptedDifficulties[r.id] = getAdaptedDifficulty(r.id, r.createdAt, logs, r.difficulty, today);
+  });
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedPillarId, setSelectedPillarId] = useState<string>('health');
   const [editingRoutine, setEditingRoutine] = useState<Routine | null>(null);
@@ -68,6 +77,7 @@ export function Pillars({
           pillar={pillar}
           routines={routines}
           completedIds={completedIds}
+          adaptedDifficulties={adaptedDifficulties}
           onToggleRoutine={onToggleRoutine}
           onAddRoutine={handleAddRoutine}
           onEditRoutine={handleEditRoutine}
