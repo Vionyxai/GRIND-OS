@@ -1,0 +1,245 @@
+export interface RoutineSuggestion {
+  id: string;
+  title: string;
+  description: string;
+  whyItWorks: string;
+  categoryLabel: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  timeOfDay: 'morning' | 'afternoon' | 'evening' | 'anytime';
+  suggestedTimeBlock?: { start: string; end: string };
+  pillarId: string;
+}
+
+export const ADHD_SUGGESTIONS: RoutineSuggestion[] = [
+  // ── MORNING ACTIVATION ──────────────────────────────────────
+  {
+    id: 'sug-bright-light',
+    title: 'Bright light on waking',
+    description: '5-10 min near a bright window or light lamp. No sunglasses.',
+    whyItWorks: 'ADHD brains have delayed melatonin onset (DSPD). Morning light suppresses residual melatonin and anchors your circadian clock — this is the strongest non-medication intervention for ADHD sleep phase delay.',
+    categoryLabel: 'Morning Activation',
+    difficulty: 'easy',
+    timeOfDay: 'morning',
+    suggestedTimeBlock: { start: '07:00', end: '07:10' },
+    pillarId: 'mental',
+  },
+  {
+    id: 'sug-medication-anchor',
+    title: 'Medication at the exact same time',
+    description: 'Take ADHD medication within 5 minutes of the same time every day.',
+    whyItWorks: 'Consistent dosing creates predictable therapeutic windows. Variability of even 30 minutes shifts peak effectiveness by hours — meaning some days feel functional and others feel like chaos for no obvious reason.',
+    categoryLabel: 'Morning Activation',
+    difficulty: 'easy',
+    timeOfDay: 'morning',
+    suggestedTimeBlock: { start: '07:05', end: '07:06' },
+    pillarId: 'health',
+  },
+  {
+    id: 'sug-body-activation',
+    title: 'Move before screens',
+    description: '10-20 min of any movement — walk, stretching, jumping jacks — before opening your phone.',
+    whyItWorks: 'Exercise increases dopamine and norepinephrine for 2-4 hours — the same neurotransmitters ADHD medications target. A 20-min walk before work is pharmacologically equivalent to a small dose of stimulant for many people.',
+    categoryLabel: 'Morning Activation',
+    difficulty: 'medium',
+    timeOfDay: 'morning',
+    suggestedTimeBlock: { start: '07:30', end: '07:50' },
+    pillarId: 'health',
+  },
+  {
+    id: 'sug-protein-breakfast',
+    title: 'Protein before anything sweet',
+    description: 'Eat protein (eggs, Greek yogurt, nuts, meat) before carbs or sugar.',
+    whyItWorks: 'Blood sugar instability dramatically worsens ADHD symptoms — impulsivity spikes within 45 min of a glucose crash. Protein slows glucose absorption and keeps prefrontal cortex (your executive function center) online.',
+    categoryLabel: 'Morning Activation',
+    difficulty: 'easy',
+    timeOfDay: 'morning',
+    pillarId: 'health',
+  },
+  {
+    id: 'sug-cold-water',
+    title: 'Cold water face splash',
+    description: 'Splash cold water on your face and wrists for 20-30 seconds.',
+    whyItWorks: 'Activates the mammalian dive reflex via vagal nerve stimulation, producing a sharp parasympathetic reset. Fast physiological activation without caffeine dependency.',
+    categoryLabel: 'Morning Activation',
+    difficulty: 'easy',
+    timeOfDay: 'morning',
+    suggestedTimeBlock: { start: '07:00', end: '07:01' },
+    pillarId: 'health',
+  },
+  {
+    id: 'sug-water-first',
+    title: 'Drink 500ml water before coffee',
+    description: 'Big glass of water before any caffeine.',
+    whyItWorks: 'Even 1-2% dehydration measurably reduces attention, working memory, and cognitive flexibility — all areas ADHD already compromises. Caffeine is mildly diuretic, making dehydration worse. Water first.',
+    categoryLabel: 'Morning Activation',
+    difficulty: 'easy',
+    timeOfDay: 'morning',
+    suggestedTimeBlock: { start: '07:00', end: '07:05' },
+    pillarId: 'health',
+  },
+
+  // ── FOCUS STRUCTURE ─────────────────────────────────────────
+  {
+    id: 'sug-top3-tonight',
+    title: 'Write tomorrow\'s top 3 tonight',
+    description: 'Before bed: write exactly 3 tasks for tomorrow. Not a list — just 3.',
+    whyItWorks: 'ADHD working memory can hold ~2 items at once (vs. 7 for neurotypicals). Externalizing tomorrow\'s priorities offloads cognitive load before sleep, reduces morning decision paralysis, and prevents the "staring at the ceiling at 2am" anxiety loop.',
+    categoryLabel: 'Focus Structure',
+    difficulty: 'easy',
+    timeOfDay: 'evening',
+    suggestedTimeBlock: { start: '21:00', end: '21:10' },
+    pillarId: 'mental',
+  },
+  {
+    id: 'sug-pomodoro',
+    title: 'Pomodoro work block',
+    description: '25 minutes of focused work, then a hard stop for 5-minute break.',
+    whyItWorks: 'ADHD brains have impaired time perception (time blindness) — tasks expand infinitely without external containers. The Pomodoro technique is one of the most studied time-blindness interventions. The forced break prevents the hyperfocus crash.',
+    categoryLabel: 'Focus Structure',
+    difficulty: 'medium',
+    timeOfDay: 'anytime',
+    pillarId: 'skills',
+  },
+  {
+    id: 'sug-set-timer',
+    title: 'Set timer before starting any task',
+    description: 'Before beginning any work, set a visible timer. Even for 10 minutes.',
+    whyItWorks: 'Time blindness (temporal processing disorder) is a core ADHD symptom — not laziness. External timers create artificial time awareness that the ADHD brain doesn\'t generate internally. Analog timers (where you can see time passing) work better than digital.',
+    categoryLabel: 'Focus Structure',
+    difficulty: 'easy',
+    timeOfDay: 'anytime',
+    pillarId: 'skills',
+  },
+  {
+    id: 'sug-one-tab',
+    title: 'Single-tab work session',
+    description: 'Close all extra browser tabs. One screen, one thing.',
+    whyItWorks: 'ADHD involves impaired inhibition of irrelevant stimuli — every visible option competes for attention equally. Reducing environmental complexity isn\'t just preference; it\'s a functional accommodation that can be the difference between 2 productive hours and 0.',
+    categoryLabel: 'Focus Structure',
+    difficulty: 'easy',
+    timeOfDay: 'anytime',
+    pillarId: 'skills',
+  },
+  {
+    id: 'sug-body-double',
+    title: 'Body double session',
+    description: 'Work alongside someone else (in person, video call, or via virtual body-doubling apps like Focusmate).',
+    whyItWorks: 'Body doubling is one of the most powerful ADHD-specific productivity tools. Another person\'s mere presence activates a different attentional system and provides enough external structure to sustain focus on tasks that feel impossible alone. Mechanism is still being studied but effectiveness is well-documented.',
+    categoryLabel: 'Focus Structure',
+    difficulty: 'easy',
+    timeOfDay: 'anytime',
+    pillarId: 'skills',
+  },
+
+  // ── BODY REGULATION ─────────────────────────────────────────
+  {
+    id: 'sug-afternoon-walk',
+    title: 'Afternoon walk (1-3pm)',
+    description: '10-15 min walk between 1pm and 3pm.',
+    whyItWorks: 'Cortisol naturally dips between 1-3pm, creating an afternoon attention trough that hits ADHD brains harder. A short walk raises cortisol and dopamine enough to restore executive function for 60-90 minutes — more effective than afternoon coffee for most people.',
+    categoryLabel: 'Body Regulation',
+    difficulty: 'easy',
+    timeOfDay: 'afternoon',
+    suggestedTimeBlock: { start: '13:30', end: '13:45' },
+    pillarId: 'health',
+  },
+  {
+    id: 'sug-no-caffeine-pm',
+    title: 'No caffeine after 2pm',
+    description: 'Stop all caffeine by 2pm every day.',
+    whyItWorks: 'Caffeine has a 5-7 hour half-life. A 3pm coffee still has 50% its caffeine at 9pm, pushing back sleep by 1-2 hours. ADHD is already associated with delayed sleep phase — caffeine is a significant amplifier of this problem.',
+    categoryLabel: 'Body Regulation',
+    difficulty: 'medium',
+    timeOfDay: 'anytime',
+    pillarId: 'health',
+  },
+  {
+    id: 'sug-movement-break',
+    title: 'Movement break every 90 min',
+    description: 'Stand up, move for 5 minutes, every 90 minutes of sitting.',
+    whyItWorks: 'Ultradian rhythms naturally peak and trough every 90 min. ADHD brains struggle with the trough. Physical movement resets the cycle. This is the biological reason ADHD kids can\'t sit still — movement is self-regulating behavior, not misbehavior.',
+    categoryLabel: 'Body Regulation',
+    difficulty: 'easy',
+    timeOfDay: 'anytime',
+    pillarId: 'health',
+  },
+
+  // ── EMOTIONAL REGULATION ────────────────────────────────────
+  {
+    id: 'sug-box-breathing',
+    title: 'Box breathing (60 sec)',
+    description: 'Breathe in 4 counts, hold 4, out 4, hold 4. Repeat 4 times.',
+    whyItWorks: 'ADHD involves heightened amygdala reactivity and slower prefrontal cortex response to emotional stimuli. Box breathing activates the parasympathetic nervous system within seconds, manually overriding the hyperarousal state. Takes 60 seconds.',
+    categoryLabel: 'Emotional Regulation',
+    difficulty: 'easy',
+    timeOfDay: 'anytime',
+    pillarId: 'mental',
+  },
+  {
+    id: 'sug-emotion-label',
+    title: 'Name your emotion before reacting',
+    description: 'When you feel activated, pause and say (even internally): "I feel ___."',
+    whyItWorks: 'Affect labeling — naming emotions — measurably reduces amygdala activation in fMRI studies. ADHD emotional dysregulation (including RSD — Rejection Sensitive Dysphoria) is partially a naming/recognition problem. This is not spiritual advice; it\'s neuroscience.',
+    categoryLabel: 'Emotional Regulation',
+    difficulty: 'easy',
+    timeOfDay: 'anytime',
+    pillarId: 'mental',
+  },
+  {
+    id: 'sug-wins-list',
+    title: 'Write 3 wins from today',
+    description: 'Write 3 specific things you accomplished or experienced today. Small counts.',
+    whyItWorks: 'ADHD brains have a negativity bias amplified by years of underperforming against neurotypical standards. Intentionally scanning for wins activates dopamine reward pathways and builds evidence against the deep "I never finish anything" narrative. Clinical journals show this reduces ADHD-related shame.',
+    categoryLabel: 'Emotional Regulation',
+    difficulty: 'easy',
+    timeOfDay: 'evening',
+    suggestedTimeBlock: { start: '20:30', end: '20:40' },
+    pillarId: 'mental',
+  },
+
+  // ── EVENING WIND-DOWN ────────────────────────────────────────
+  {
+    id: 'sug-screens-off',
+    title: 'Screens off 60 min before bed',
+    description: 'Hard stop on all screens (phone, TV, laptop) 60 minutes before your target sleep time.',
+    whyItWorks: 'Blue light delays melatonin production by 1-3 hours. ADHD brains already have delayed melatonin onset (often 90 min later than neurotypical average). Combined, this easily pushes natural sleep time to 2-3am, creating chronic sleep deprivation that looks exactly like worsened ADHD the next day.',
+    categoryLabel: 'Evening Wind-Down',
+    difficulty: 'hard',
+    timeOfDay: 'evening',
+    suggestedTimeBlock: { start: '21:00', end: '22:00' },
+    pillarId: 'health',
+  },
+  {
+    id: 'sug-consistent-sleep',
+    title: 'Sleep at the same time every night',
+    description: 'Same bedtime, every night — including weekends. Set an alarm for it.',
+    whyItWorks: 'ADHD circadian rhythms are fragile and drift easily. Irregular sleep timing (social jetlag) resets the clock daily, preventing deep sleep accumulation. Consistent sleep time is the #1 evidence-based sleep hygiene intervention — more effective than any supplement.',
+    categoryLabel: 'Evening Wind-Down',
+    difficulty: 'hard',
+    timeOfDay: 'evening',
+    pillarId: 'health',
+  },
+  {
+    id: 'sug-shutdown-ritual',
+    title: 'Work shutdown ritual',
+    description: 'At end of workday: close all work apps, write one sentence about where you left off, say "shutdown complete" aloud.',
+    whyItWorks: 'ADHD hyperfocus makes stopping work harder than starting it. A defined shutdown ritual creates a cognitive "save state" and gives the brain a clear stopping signal. The verbal declaration creates a stronger neural pattern than a mental note.',
+    categoryLabel: 'Evening Wind-Down',
+    difficulty: 'easy',
+    timeOfDay: 'evening',
+    suggestedTimeBlock: { start: '18:00', end: '18:05' },
+    pillarId: 'money',
+  },
+];
+
+export const SUGGESTION_CATEGORIES = [
+  { id: 'morning', label: 'Morning Activation', color: '#FFD166' },
+  { id: 'focus', label: 'Focus Structure', color: '#4CC9F0' },
+  { id: 'body', label: 'Body Regulation', color: '#06D6A0' },
+  { id: 'emotional', label: 'Emotional Regulation', color: '#F72585' },
+  { id: 'evening', label: 'Evening Wind-Down', color: '#7209B7' },
+] as const;
+
+export function getSuggestionsByCategory(categoryLabel: string): RoutineSuggestion[] {
+  return ADHD_SUGGESTIONS.filter((s) => s.categoryLabel === categoryLabel);
+}

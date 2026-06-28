@@ -47,6 +47,21 @@ export function Today({ routines, pillars, todayLog, profile, onToggleRoutine }:
     grouped[r.timeOfDay].push(r);
   });
 
+  // Within each group, sort by time block start (timed routines first, then untimed)
+  const sortByTimeBlock = (list: Routine[]): Routine[] =>
+    [...list].sort((a, b) => {
+      if (a.timeBlock && b.timeBlock) return a.timeBlock.start.localeCompare(b.timeBlock.start);
+      if (a.timeBlock) return -1;
+      if (b.timeBlock) return 1;
+      return 0;
+    });
+
+  // Count routines with deadlines due today or overdue (for urgent indicator)
+  const today2 = getTodayString();
+  const urgentCount = activeRoutines.filter(
+    (r) => r.deadline && r.deadline <= today2 && !todayLog.completedRoutineIds.includes(r.id)
+  ).length;
+
   const progressBarWidth = `${Math.round(completionPct * 100)}%`;
 
   return (
@@ -208,6 +223,19 @@ export function Today({ routines, pillars, todayLog, profile, onToggleRoutine }:
 
       {/* Routines grouped by time */}
       <div className="px-4 py-4 space-y-6">
+        {/* Urgent deadlines banner */}
+        {urgentCount > 0 && (
+          <div
+            className="rounded-xl px-4 py-3 mb-2 flex items-center gap-3"
+            style={{ backgroundColor: '#E6394615', border: '1px solid #E6394640' }}
+          >
+            <AlertTriangle size={16} color="#E63946" />
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '13px', color: '#E63946', fontWeight: 600 }}>
+              {urgentCount} routine{urgentCount > 1 ? 's' : ''} due today
+            </p>
+          </div>
+        )}
+
         {totalCount === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-4">
             <Flame size={40} color="#1E1E2E" />
@@ -246,7 +274,7 @@ export function Today({ routines, pillars, todayLog, profile, onToggleRoutine }:
           </div>
         ) : (
           TIME_ORDER.map((time) => {
-            const timeRoutines = grouped[time];
+            const timeRoutines = sortByTimeBlock(grouped[time]);
             if (timeRoutines.length === 0) return null;
 
             return (

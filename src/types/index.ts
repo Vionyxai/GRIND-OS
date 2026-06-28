@@ -4,6 +4,11 @@ export interface Pillar {
   color: string;
 }
 
+export interface TimeBlock {
+  start: string; // "HH:MM" 24-hour
+  end: string;   // "HH:MM" 24-hour
+}
+
 export interface Routine {
   id: string;
   pillarId: string;
@@ -11,6 +16,8 @@ export interface Routine {
   description?: string;
   difficulty: 'easy' | 'medium' | 'hard';
   timeOfDay: 'morning' | 'afternoon' | 'evening' | 'anytime';
+  timeBlock?: TimeBlock;
+  deadline?: string; // "YYYY-MM-DD"
   isActive: boolean;
   createdAt: string;
 }
