@@ -1,4 +1,4 @@
-import { Check, Clock, AlertTriangle, Activity } from 'lucide-react';
+import { Check, Clock, AlertTriangle, Activity, CalendarClock } from 'lucide-react';
 import { Routine } from '../types';
 import { XP_VALUES } from '../utils/xp';
 import { getTodayString, daysBetween } from '../utils/dates';
@@ -9,6 +9,7 @@ interface RoutineCardProps {
   isCompleted: boolean;
   onToggle: () => void;
   adaptedDifficulty?: Routine['difficulty'];
+  isPreview?: boolean;
 }
 
 const DIFFICULTY_COLORS: Record<Routine['difficulty'], string> = {
@@ -67,6 +68,7 @@ export function RoutineCard({
   isCompleted,
   onToggle,
   adaptedDifficulty,
+  isPreview = false,
 }: RoutineCardProps) {
   const effectiveDifficulty = adaptedDifficulty ?? routine.difficulty;
   const isAdapted = adaptedDifficulty !== undefined && adaptedDifficulty !== routine.difficulty;
@@ -77,15 +79,16 @@ export function RoutineCard({
 
   return (
     <button
-      onClick={onToggle}
+      onClick={isPreview ? undefined : onToggle}
       className="w-full text-left rounded-lg overflow-hidden flex items-stretch"
       style={{
         backgroundColor: '#13131A',
-        border: `1px solid ${isCompleted ? pillarColor + '40' : deadlineState?.color === '#E63946' ? '#E6394630' : '#1E1E2E'}`,
+        border: `1px solid ${isPreview ? '#4CC9F030' : isCompleted ? pillarColor + '40' : deadlineState?.color === '#E63946' ? '#E6394630' : '#1E1E2E'}`,
         minHeight: '60px',
         transition: 'border-color 0.2s, opacity 0.2s',
         opacity: isCompleted ? 0.7 : 1,
         WebkitTapHighlightColor: 'transparent',
+        cursor: isPreview ? 'default' : 'pointer',
       }}
     >
       {/* Left color stripe */}
@@ -232,23 +235,40 @@ export function RoutineCard({
           </div>
         </div>
 
-        {/* Checkmark */}
-        <div
-          style={{
-            width: '32px',
-            height: '32px',
-            borderRadius: '50%',
-            border: `2px solid ${isCompleted ? pillarColor : '#1E1E2E'}`,
-            backgroundColor: isCompleted ? pillarColor : 'transparent',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-            transition: 'all 0.2s',
-          }}
-        >
-          {isCompleted && <Check size={16} strokeWidth={3} color="#0A0A0F" />}
-        </div>
+        {/* Checkmark / preview indicator */}
+        {isPreview ? (
+          <div
+            style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              border: '1px dashed #4CC9F060',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <CalendarClock size={14} color="#4CC9F060" />
+          </div>
+        ) : (
+          <div
+            style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              border: `2px solid ${isCompleted ? pillarColor : '#1E1E2E'}`,
+              backgroundColor: isCompleted ? pillarColor : 'transparent',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              transition: 'all 0.2s',
+            }}
+          >
+            {isCompleted && <Check size={16} strokeWidth={3} color="#0A0A0F" />}
+          </div>
+        )}
       </div>
     </button>
   );

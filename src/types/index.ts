@@ -17,7 +17,7 @@ export interface Routine {
   title: string;
   description?: string;
   difficulty: 'easy' | 'medium' | 'hard';
-  timeOfDay: 'morning' | 'afternoon' | 'evening' | 'anytime';
+  timeOfDay: 'morning' | 'afternoon' | 'evening' | 'night' | 'anytime';
   timeBlock?: TimeBlock;
   deadline?: string; // "YYYY-MM-DD"
   activityType?: ActivityType;

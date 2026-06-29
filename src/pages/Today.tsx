@@ -1,10 +1,11 @@
-import { Zap, Flame, AlertTriangle } from 'lucide-react';
+import { useState } from 'react';
+import { Zap, Flame, AlertTriangle, CalendarDays } from 'lucide-react';
 import { Routine, DailyLog, UserProfile, Pillar } from '../types';
 import { QuoteCard } from '../components/QuoteCard';
 import { MomentumRing } from '../components/MomentumRing';
 import { RoutineCard } from '../components/RoutineCard';
 import { getDailyQuote } from '../data/quotes';
-import { getTodayString, formatDisplayDate } from '../utils/dates';
+import { getTodayString, getTomorrowString, formatDisplayDate } from '../utils/dates';
 import { getAdaptedDifficulty } from '../utils/xp';
 
 interface TodayProps {
@@ -16,16 +17,20 @@ interface TodayProps {
   onToggleRoutine: (routineId: string) => void;
 }
 
-const TIME_ORDER: Routine['timeOfDay'][] = ['morning', 'afternoon', 'evening', 'anytime'];
+const TIME_ORDER: Routine['timeOfDay'][] = ['morning', 'afternoon', 'evening', 'night', 'anytime'];
 const TIME_LABELS: Record<Routine['timeOfDay'], string> = {
   morning: 'MORNING',
   afternoon: 'AFTERNOON',
   evening: 'EVENING',
+  night: 'NIGHT',
   anytime: 'ANYTIME',
 };
 
 export function Today({ routines, pillars, todayLog, logs, profile, onToggleRoutine }: TodayProps) {
   const today = getTodayString();
+  const tomorrow = getTomorrowString();
+  const [viewDate, setViewDate] = useState<'today' | 'tomorrow'>('today');
+  const isTomorrow = viewDate === 'tomorrow';
 
   // Compute adaptive difficulties from completion history
   const adaptedDifficulties: Record<string, Routine['difficulty']> = {};
@@ -48,6 +53,7 @@ export function Today({ routines, pillars, todayLog, logs, profile, onToggleRout
     morning: [],
     afternoon: [],
     evening: [],
+    night: [],
     anytime: [],
   };
 
@@ -65,9 +71,8 @@ export function Today({ routines, pillars, todayLog, logs, profile, onToggleRout
     });
 
   // Count routines with deadlines due today or overdue (for urgent indicator)
-  const today2 = getTodayString();
   const urgentCount = activeRoutines.filter(
-    (r) => r.deadline && r.deadline <= today2 && !todayLog.completedRoutineIds.includes(r.id)
+    (r) => r.deadline && r.deadline <= today && !todayLog.completedRoutineIds.includes(r.id)
   ).length;
 
   const progressBarWidth = `${Math.round(completionPct * 100)}%`;
@@ -78,161 +83,184 @@ export function Today({ routines, pillars, todayLog, logs, profile, onToggleRout
       <div className="px-4 pt-4">
         <QuoteCard quote={quote} />
 
-        {/* Date */}
-        <p
-          style={{
-            fontFamily: 'Bebas Neue, sans-serif',
-            fontSize: '28px',
-            color: '#F8F9FA',
-            letterSpacing: '0.06em',
-            marginBottom: '16px',
-          }}
-        >
-          {formatDisplayDate(today)}
-        </p>
-
-        {/* Stats row */}
-        <div className="flex items-center justify-between gap-4 mb-4">
-          <MomentumRing score={todayLog.momentumScore} size={108} />
-
-          <div className="flex-1 flex flex-col gap-3">
-            {/* XP today */}
-            <div
-              className="rounded-xl px-4 py-3"
-              style={{ backgroundColor: '#13131A', border: '1px solid #1E1E2E' }}
+        {/* Date + Today/Tomorrow toggle */}
+        <div className="flex items-center justify-between mb-4">
+          <p
+            style={{
+              fontFamily: 'Bebas Neue, sans-serif',
+              fontSize: '28px',
+              color: isTomorrow ? '#4CC9F0' : '#F8F9FA',
+              letterSpacing: '0.06em',
+            }}
+          >
+            {formatDisplayDate(isTomorrow ? tomorrow : today)}
+          </p>
+          <div
+            className="flex rounded-lg overflow-hidden"
+            style={{ border: '1px solid #1E1E2E', flexShrink: 0 }}
+          >
+            <button
+              onClick={() => setViewDate('today')}
+              style={{
+                padding: '8px 14px',
+                fontFamily: 'Inter, sans-serif',
+                fontSize: '12px',
+                fontWeight: 700,
+                letterSpacing: '0.04em',
+                backgroundColor: !isTomorrow ? '#E63946' : 'transparent',
+                color: !isTomorrow ? '#F8F9FA' : '#6C757D',
+                border: 'none',
+                minHeight: '36px',
+                WebkitTapHighlightColor: 'transparent',
+                cursor: 'pointer',
+              } as React.CSSProperties}
             >
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '11px', color: '#6C757D', letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 600 }}>
-                XP Today
-              </p>
-              <div className="flex items-center gap-1 mt-0.5">
-                <Zap size={14} color="#FFD166" />
-                <span
-                  style={{
-                    fontFamily: 'Bebas Neue, sans-serif',
-                    fontSize: '26px',
-                    color: '#FFD166',
-                    letterSpacing: '0.04em',
-                  }}
-                >
-                  {todayLog.xpEarned}
-                </span>
-              </div>
-            </div>
-
-            {/* Streak */}
-            <div
-              className="rounded-xl px-4 py-3"
-              style={{ backgroundColor: '#13131A', border: '1px solid #1E1E2E' }}
+              TODAY
+            </button>
+            <button
+              onClick={() => setViewDate('tomorrow')}
+              style={{
+                padding: '8px 14px',
+                fontFamily: 'Inter, sans-serif',
+                fontSize: '12px',
+                fontWeight: 700,
+                letterSpacing: '0.04em',
+                backgroundColor: isTomorrow ? '#4CC9F0' : 'transparent',
+                color: isTomorrow ? '#0A0A0F' : '#6C757D',
+                border: 'none',
+                borderLeft: '1px solid #1E1E2E',
+                minHeight: '36px',
+                WebkitTapHighlightColor: 'transparent',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              } as React.CSSProperties}
             >
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '11px', color: '#6C757D', letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 600 }}>
-                Streak
-              </p>
-              <div className="flex items-center gap-1 mt-0.5">
-                {profile.streakFrozen ? (
-                  <AlertTriangle size={14} color="#FFD166" />
-                ) : (
-                  <Flame size={14} color="#E63946" />
-                )}
-                <span
-                  style={{
-                    fontFamily: 'Bebas Neue, sans-serif',
-                    fontSize: '26px',
-                    color: profile.streakFrozen ? '#FFD166' : '#E63946',
-                    letterSpacing: '0.04em',
-                  }}
-                >
-                  {profile.streakFrozen ? 'FROZEN' : `DAY ${profile.currentStreak}`}
-                </span>
-              </div>
-            </div>
+              <CalendarDays size={13} />
+              TOMORROW
+            </button>
           </div>
         </div>
 
-        {/* Victory banner */}
-        {victoryReached && (
+        {/* Stats row — hide in tomorrow view */}
+        {!isTomorrow && (
+          <>
+            <div className="flex items-center justify-between gap-4 mb-4">
+              <MomentumRing score={todayLog.momentumScore} size={108} />
+
+              <div className="flex-1 flex flex-col gap-3">
+                <div
+                  className="rounded-xl px-4 py-3"
+                  style={{ backgroundColor: '#13131A', border: '1px solid #1E1E2E' }}
+                >
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '11px', color: '#6C757D', letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 600 }}>
+                    XP Today
+                  </p>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <Zap size={14} color="#FFD166" />
+                    <span style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '26px', color: '#FFD166', letterSpacing: '0.04em' }}>
+                      {todayLog.xpEarned}
+                    </span>
+                  </div>
+                </div>
+
+                <div
+                  className="rounded-xl px-4 py-3"
+                  style={{ backgroundColor: '#13131A', border: '1px solid #1E1E2E' }}
+                >
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '11px', color: '#6C757D', letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 600 }}>
+                    Streak
+                  </p>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    {profile.streakFrozen ? (
+                      <AlertTriangle size={14} color="#FFD166" />
+                    ) : (
+                      <Flame size={14} color="#E63946" />
+                    )}
+                    <span style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '26px', color: profile.streakFrozen ? '#FFD166' : '#E63946', letterSpacing: '0.04em' }}>
+                      {profile.streakFrozen ? 'FROZEN' : `DAY ${profile.currentStreak}`}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {victoryReached && (
+              <div
+                className="rounded-xl px-4 py-3 mb-4 flex items-center gap-3"
+                style={{ background: 'linear-gradient(135deg, #06D6A020, #06D6A010)', border: '1px solid #06D6A040' }}
+              >
+                <Flame size={20} color="#06D6A0" />
+                <div>
+                  <p style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '18px', color: '#06D6A0', letterSpacing: '0.05em' }}>
+                    YOU'RE ON FIRE TODAY
+                  </p>
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', color: '#6C757D' }}>
+                    {completedCount}/{totalCount} routines complete
+                  </p>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Tomorrow plan banner */}
+        {isTomorrow && totalCount > 0 && (
           <div
             className="rounded-xl px-4 py-3 mb-4 flex items-center gap-3"
-            style={{
-              background: 'linear-gradient(135deg, #06D6A020, #06D6A010)',
-              border: '1px solid #06D6A040',
-            }}
+            style={{ backgroundColor: '#4CC9F010', border: '1px solid #4CC9F030' }}
           >
-            <Flame size={20} color="#06D6A0" />
+            <CalendarDays size={18} color="#4CC9F0" />
             <div>
-              <p
-                style={{
-                  fontFamily: 'Bebas Neue, sans-serif',
-                  fontSize: '18px',
-                  color: '#06D6A0',
-                  letterSpacing: '0.05em',
-                }}
-              >
-                YOU'RE ON FIRE TODAY
+              <p style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '16px', color: '#4CC9F0', letterSpacing: '0.05em' }}>
+                TOMORROW'S PLAN
               </p>
-              <p
-                style={{
-                  fontFamily: 'Inter, sans-serif',
-                  fontSize: '12px',
-                  color: '#6C757D',
-                }}
-              >
-                {completedCount}/{totalCount} routines complete
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', color: '#6C757D' }}>
+                {totalCount} routine{totalCount !== 1 ? 's' : ''} scheduled · plan tonight, execute tomorrow
               </p>
             </div>
           </div>
         )}
       </div>
 
-      {/* Sticky progress bar */}
-      <div
-        className="sticky top-0 z-10 px-4 py-3"
-        style={{ backgroundColor: '#0A0A0F', borderBottom: '1px solid #1E1E2E' }}
-      >
-        <div className="flex justify-between items-center mb-1.5">
-          <span
-            style={{
-              fontFamily: 'Inter, sans-serif',
-              fontSize: '13px',
-              fontWeight: 600,
-              color: '#F8F9FA',
-            }}
-          >
-            {completedCount} of {totalCount} complete
-          </span>
-          <span
-            style={{
-              fontFamily: 'Bebas Neue, sans-serif',
-              fontSize: '16px',
-              color: completionPct >= 0.8 ? '#06D6A0' : completionPct >= 0.5 ? '#FFD166' : '#E63946',
-              letterSpacing: '0.04em',
-            }}
-          >
-            {Math.round(completionPct * 100)}%
-          </span>
-        </div>
+      {/* Sticky progress bar — today only */}
+      {!isTomorrow && (
         <div
-          className="w-full rounded-full overflow-hidden"
-          style={{ height: '6px', backgroundColor: '#1E1E2E' }}
+          className="sticky top-0 z-10 px-4 py-3"
+          style={{ backgroundColor: '#0A0A0F', borderBottom: '1px solid #1E1E2E' }}
         >
-          <div
-            className="h-full rounded-full transition-all duration-500"
-            style={{
-              width: progressBarWidth,
-              backgroundColor:
-                completionPct >= 0.8
-                  ? '#06D6A0'
-                  : completionPct >= 0.5
-                  ? '#FFD166'
-                  : '#E63946',
-            }}
-          />
+          <div className="flex justify-between items-center mb-1.5">
+            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '13px', fontWeight: 600, color: '#F8F9FA' }}>
+              {completedCount} of {totalCount} complete
+            </span>
+            <span
+              style={{
+                fontFamily: 'Bebas Neue, sans-serif',
+                fontSize: '16px',
+                color: completionPct >= 0.8 ? '#06D6A0' : completionPct >= 0.5 ? '#FFD166' : '#E63946',
+                letterSpacing: '0.04em',
+              }}
+            >
+              {Math.round(completionPct * 100)}%
+            </span>
+          </div>
+          <div className="w-full rounded-full overflow-hidden" style={{ height: '6px', backgroundColor: '#1E1E2E' }}>
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{
+                width: progressBarWidth,
+                backgroundColor: completionPct >= 0.8 ? '#06D6A0' : completionPct >= 0.5 ? '#FFD166' : '#E63946',
+              }}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Routines grouped by time */}
       <div className="px-4 py-4 space-y-6">
-        {/* Urgent deadlines banner */}
-        {urgentCount > 0 && (
+        {/* Urgent deadlines banner — today only */}
+        {!isTomorrow && urgentCount > 0 && (
           <div
             className="rounded-xl px-4 py-3 mb-2 flex items-center gap-3"
             style={{ backgroundColor: '#E6394615', border: '1px solid #E6394640' }}
@@ -248,35 +276,11 @@ export function Today({ routines, pillars, todayLog, logs, profile, onToggleRout
           <div className="flex flex-col items-center justify-center py-16 gap-4">
             <Flame size={40} color="#1E1E2E" />
             <div className="text-center">
-              <p
-                style={{
-                  fontFamily: 'Bebas Neue, sans-serif',
-                  fontSize: '22px',
-                  color: '#6C757D',
-                  letterSpacing: '0.05em',
-                }}
-              >
-                DAY STARTS NOW
+              <p style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '22px', color: '#6C757D', letterSpacing: '0.05em' }}>
+                {isTomorrow ? 'NOTHING PLANNED YET' : 'DAY STARTS NOW'}
               </p>
-              <p
-                style={{
-                  fontFamily: 'Inter, sans-serif',
-                  fontSize: '14px',
-                  color: '#6C757D',
-                  marginTop: '4px',
-                }}
-              >
-                One rep is all it takes.
-              </p>
-              <p
-                style={{
-                  fontFamily: 'Inter, sans-serif',
-                  fontSize: '12px',
-                  color: '#6C757D',
-                  marginTop: '8px',
-                }}
-              >
-                Go to Pillars to add your routines.
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '14px', color: '#6C757D', marginTop: '4px' }}>
+                {isTomorrow ? 'Add routines in Pillars to build your plan.' : 'One rep is all it takes.'}
               </p>
             </div>
           </div>
@@ -292,7 +296,7 @@ export function Today({ routines, pillars, todayLog, logs, profile, onToggleRout
                     fontFamily: 'Inter, sans-serif',
                     fontSize: '11px',
                     fontWeight: 700,
-                    color: '#6C757D',
+                    color: isTomorrow ? '#4CC9F060' : '#6C757D',
                     letterSpacing: '0.1em',
                     textTransform: 'uppercase',
                     marginBottom: '10px',
@@ -306,9 +310,10 @@ export function Today({ routines, pillars, todayLog, logs, profile, onToggleRout
                       key={routine.id}
                       routine={routine}
                       pillarColor={getPillarColor(routine.pillarId)}
-                      isCompleted={todayLog.completedRoutineIds.includes(routine.id)}
-                      onToggle={() => onToggleRoutine(routine.id)}
+                      isCompleted={!isTomorrow && todayLog.completedRoutineIds.includes(routine.id)}
+                      onToggle={() => !isTomorrow && onToggleRoutine(routine.id)}
                       adaptedDifficulty={adaptedDifficulties[routine.id]}
+                      isPreview={isTomorrow}
                     />
                   ))}
                 </div>

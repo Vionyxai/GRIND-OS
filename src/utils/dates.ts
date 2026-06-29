@@ -6,6 +6,15 @@ export function getTodayString(): string {
   return `${year}-${month}-${day}`;
 }
 
+export function getTomorrowString(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 export function getWeekStart(dateStr: string): string {
   const date = new Date(dateStr + 'T00:00:00');
   const day = date.getDay(); // 0=Sunday, 1=Monday...

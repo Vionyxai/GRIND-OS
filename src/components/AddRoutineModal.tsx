@@ -21,7 +21,14 @@ type TimeOfDay = Routine['timeOfDay'];
 type Tab = 'suggestions' | 'custom';
 
 const DIFFICULTIES: Difficulty[] = ['easy', 'medium', 'hard'];
-const TIMES: TimeOfDay[] = ['morning', 'afternoon', 'evening', 'anytime'];
+const TIMES: TimeOfDay[] = ['morning', 'afternoon', 'evening', 'night', 'anytime'];
+
+function getTimeOfDayFromHour(hour: number): TimeOfDay {
+  if (hour >= 5 && hour < 12) return 'morning';
+  if (hour >= 12 && hour < 17) return 'afternoon';
+  if (hour >= 17 && hour < 21) return 'evening';
+  return 'night';
+}
 
 const ACTIVITY_TYPES: { id: ActivityType; label: string; color: string }[] = [
   { id: 'gym', label: 'Gym', color: '#06D6A0' },
@@ -627,7 +634,13 @@ export function AddRoutineModal({
                 <div className="flex items-center justify-between mb-2">
                   <label style={{ ...labelStyle, marginBottom: 0 }}>Specific Time Block</label>
                   <button
-                    onClick={() => setTimeBlockEnabled((v) => !v)}
+                    onClick={() => {
+                      const next = !timeBlockEnabled;
+                      setTimeBlockEnabled(next);
+                      if (next) {
+                        setTimeOfDay(getTimeOfDayFromHour(parseInt(timeStart.split(':')[0])));
+                      }
+                    }}
                     style={{
                       width: '44px',
                       height: '26px',
@@ -661,7 +674,10 @@ export function AddRoutineModal({
                       <input
                         type="time"
                         value={timeStart}
-                        onChange={(e) => setTimeStart(e.target.value)}
+                        onChange={(e) => {
+                          setTimeStart(e.target.value);
+                          setTimeOfDay(getTimeOfDayFromHour(parseInt(e.target.value.split(':')[0])));
+                        }}
                         style={{
                           width: '100%',
                           backgroundColor: '#0A0A0F',
