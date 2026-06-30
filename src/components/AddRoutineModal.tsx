@@ -30,11 +30,13 @@ function getTimeOfDayFromHour(hour: number): TimeOfDay {
   return 'night';
 }
 
-const PHYSICAL_ACTIVITY_TYPES: { id: ActivityType; label: string; color: string }[] = [
+const HEALTH_ACTIVITY_TYPES: { id: ActivityType; label: string; color: string }[] = [
   { id: 'gym', label: 'Gym', color: '#06D6A0' },
   { id: 'outdoor', label: 'Outdoor / Hike', color: '#4CC9F0' },
   { id: 'sport', label: 'Sport', color: '#E63946' },
   { id: 'steps', label: 'Steps Goal', color: '#FFD166' },
+  { id: 'nutrition', label: 'Nutrition Goal', color: '#FF9F1C' },
+  { id: 'hydration', label: 'Water Intake', color: '#4CC9F0' },
 ];
 
 const DIFF_COLORS: Record<Difficulty, string> = {
@@ -222,7 +224,7 @@ export function AddRoutineModal({
   const [timeEnd, setTimeEnd] = useState('09:30');
   const [deadlineEnabled, setDeadlineEnabled] = useState(false);
   const [deadline, setDeadline] = useState('');
-  const [activityType, setActivityType] = useState<ActivityType>('gym');
+  const [activityType, setActivityType] = useState<ActivityType | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -238,7 +240,7 @@ export function AddRoutineModal({
       setTimeEnd(editingRoutine.timeBlock?.end ?? '09:30');
       setDeadlineEnabled(!!editingRoutine.deadline);
       setDeadline(editingRoutine.deadline ?? '');
-      setActivityType(editingRoutine.activityType ?? 'gym');
+      setActivityType(editingRoutine.activityType ?? null);
     } else {
       setTab('suggestions');
       setSelectedCategory(null);
@@ -252,7 +254,7 @@ export function AddRoutineModal({
       setTimeEnd('09:30');
       setDeadlineEnabled(false);
       setDeadline('');
-      setActivityType('gym');
+      setActivityType(null);
     }
   }, [editingRoutine, initialPillarId, isOpen]);
 
@@ -269,7 +271,7 @@ export function AddRoutineModal({
       setTimeStart(s.suggestedTimeBlock.start);
       setTimeEnd(s.suggestedTimeBlock.end);
     }
-    if (s.activityType) setActivityType(s.activityType);
+    setActivityType(s.activityType ?? null);
     setTab('custom');
   };
 
@@ -283,7 +285,7 @@ export function AddRoutineModal({
       timeOfDay,
       timeBlock: timeBlockEnabled ? { start: timeStart, end: timeEnd } : undefined,
       deadline: deadlineEnabled && deadline ? deadline : undefined,
-      activityType: pillarId === 'health' ? activityType : undefined,
+      activityType: pillarId === 'health' && activityType ? activityType : undefined,
       isActive: true,
     });
     onClose();
@@ -569,12 +571,30 @@ export function AddRoutineModal({
                 </p>
               </div>
 
-              {/* Activity Type (health pillar only — physical activities) */}
+              {/* Activity Type (health pillar — optional) */}
               {pillarId === 'health' && (
                 <div>
-                  <label style={labelStyle}>Activity Type</label>
+                  <label style={labelStyle}>Activity Type <span style={{ color: '#6C757D', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(optional)</span></label>
                   <div className="flex gap-2 flex-wrap">
-                    {PHYSICAL_ACTIVITY_TYPES.map((a) => (
+                    <button
+                      onClick={() => setActivityType(null)}
+                      style={{
+                        padding: '8px 14px',
+                        borderRadius: '8px',
+                        fontFamily: 'Inter, sans-serif',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        backgroundColor: activityType === null ? '#1E1E2E' : 'transparent',
+                        color: activityType === null ? '#F8F9FA' : '#6C757D',
+                        border: `1px solid ${activityType === null ? '#4CC9F0' : '#1E1E2E'}`,
+                        minHeight: '40px',
+                        WebkitTapHighlightColor: 'transparent',
+                        cursor: 'pointer',
+                      } as React.CSSProperties}
+                    >
+                      None
+                    </button>
+                    {HEALTH_ACTIVITY_TYPES.map((a) => (
                       <button
                         key={a.id}
                         onClick={() => setActivityType(a.id)}
