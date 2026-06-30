@@ -236,6 +236,17 @@ export const ADHD_SUGGESTIONS: RoutineSuggestion[] = [
 
   // ── HEALTH — PHYSICAL ACTIVITY ──────────────────────────────
   {
+    id: 'sug-steps-goal',
+    title: 'Hit your daily step goal',
+    description: 'Track and hit a daily step target — 8k, 10k, or whatever your personal goal is.',
+    whyItWorks: "Walking is a stealth ADHD intervention. It increases dopamine and norepinephrine without requiring gym motivation, structured time, or equipment. Research shows that NEAT (non-exercise activity thermogenesis — movement from daily life like walking) accounts for more total energy expenditure than dedicated exercise for most people. 10k steps also correlates with reduced cardiovascular risk independent of other exercise.",
+    categoryLabel: 'Body Regulation',
+    difficulty: 'medium',
+    timeOfDay: 'anytime',
+    pillarId: 'health',
+    activityType: 'steps',
+  },
+  {
     id: 'sug-outdoor-walk',
     title: 'Outdoor walk or hike',
     description: '20-60 min outside — nature, trail, or neighborhood. No destination required.',

@@ -62,7 +62,7 @@ export function Stats({ logs, routines, pillars }: StatsProps) {
   // Activity breakdown (last 30 days, health pillar physical routines)
   const healthActivityRoutines = activeRoutines.filter((r) => r.pillarId === 'health' && r.activityType);
   const activityTypeCounts: Record<string, number> = {};
-  const PHYSICAL_TYPES = ['gym', 'outdoor', 'sport'];
+  const PHYSICAL_TYPES = ['gym', 'outdoor', 'sport', 'steps'];
   last30.forEach((date) => {
     const log = logs.find((l) => l.date === date);
     if (!log) return;
@@ -351,11 +351,12 @@ export function Stats({ logs, routines, pillars }: StatsProps) {
             </p>
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             {[
               { id: 'gym', label: 'GYM', color: '#06D6A0' },
               { id: 'outdoor', label: 'OUTDOOR', color: '#4CC9F0' },
               { id: 'sport', label: 'SPORT', color: '#E63946' },
+              { id: 'steps', label: 'STEPS', color: '#FFD166' },
             ].map(({ id, label, color }) => {
               const count = activityTypeCounts[id] ?? 0;
               return (

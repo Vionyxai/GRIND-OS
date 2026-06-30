@@ -4,7 +4,7 @@ export interface Pillar {
   color: string;
 }
 
-export type ActivityType = 'gym' | 'outdoor' | 'sport' | 'creative' | 'social' | 'rest';
+export type ActivityType = 'gym' | 'outdoor' | 'sport' | 'steps' | 'creative' | 'social' | 'rest';
 
 export interface TimeBlock {
   start: string; // "HH:MM" 24-hour

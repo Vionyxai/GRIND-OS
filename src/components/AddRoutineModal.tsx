@@ -34,6 +34,7 @@ const PHYSICAL_ACTIVITY_TYPES: { id: ActivityType; label: string; color: string 
   { id: 'gym', label: 'Gym', color: '#06D6A0' },
   { id: 'outdoor', label: 'Outdoor / Hike', color: '#4CC9F0' },
   { id: 'sport', label: 'Sport', color: '#E63946' },
+  { id: 'steps', label: 'Steps Goal', color: '#FFD166' },
 ];
 
 const DIFF_COLORS: Record<Difficulty, string> = {
