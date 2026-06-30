@@ -234,16 +234,16 @@ export const ADHD_SUGGESTIONS: RoutineSuggestion[] = [
     pillarId: 'money',
   },
 
-  // ── LEISURE & PLAY ──────────────────────────────────────────
+  // ── HEALTH — PHYSICAL ACTIVITY ──────────────────────────────
   {
     id: 'sug-outdoor-walk',
     title: 'Outdoor walk or hike',
     description: '20-60 min outside — nature, trail, or neighborhood. No destination required.',
     whyItWorks: "Nature environments reduce cortisol and increase dopamine more than urban walks. 'Green exercise' (any movement outdoors) improves ADHD attention scores by 20% in studies. It's the cheapest, most available ADHD intervention available.",
-    categoryLabel: 'Leisure & Play',
+    categoryLabel: 'Body Regulation',
     difficulty: 'easy',
     timeOfDay: 'anytime',
-    pillarId: 'leisure',
+    pillarId: 'health',
     activityType: 'outdoor',
   },
   {
@@ -251,10 +251,10 @@ export const ADHD_SUGGESTIONS: RoutineSuggestion[] = [
     title: 'Gym / strength training',
     description: 'Any gym session — lifting, classes, cardio machines.',
     whyItWorks: 'Resistance training boosts dopamine and BDNF (brain-derived neurotrophic factor) for 2-4 hours. Regular gym goers with ADHD show measurably better working memory, impulse control, and emotional regulation compared to non-exercisers.',
-    categoryLabel: 'Leisure & Play',
+    categoryLabel: 'Body Regulation',
     difficulty: 'medium',
     timeOfDay: 'anytime',
-    pillarId: 'leisure',
+    pillarId: 'health',
     activityType: 'gym',
   },
   {
@@ -262,12 +262,14 @@ export const ADHD_SUGGESTIONS: RoutineSuggestion[] = [
     title: 'Sport or recreational activity',
     description: 'Basketball, tennis, soccer, swimming, cycling — anything competitive or team-based.',
     whyItWorks: 'Sport combines movement, novelty, social contact, and immediate feedback — four of the most powerful ADHD dopamine triggers simultaneously. Many adults with ADHD credit sports as their primary emotional regulation tool.',
-    categoryLabel: 'Leisure & Play',
+    categoryLabel: 'Body Regulation',
     difficulty: 'medium',
     timeOfDay: 'anytime',
-    pillarId: 'leisure',
+    pillarId: 'health',
     activityType: 'sport',
   },
+
+  // ── LEISURE & PLAY ──────────────────────────────────────────
   {
     id: 'sug-creative-time',
     title: 'Unstructured creative time',
@@ -277,7 +279,6 @@ export const ADHD_SUGGESTIONS: RoutineSuggestion[] = [
     difficulty: 'easy',
     timeOfDay: 'anytime',
     pillarId: 'leisure',
-    activityType: 'creative',
   },
   {
     id: 'sug-social-connection',
@@ -288,7 +289,6 @@ export const ADHD_SUGGESTIONS: RoutineSuggestion[] = [
     difficulty: 'easy',
     timeOfDay: 'anytime',
     pillarId: 'leisure',
-    activityType: 'social',
   },
   {
     id: 'sug-rest-day',
@@ -299,7 +299,6 @@ export const ADHD_SUGGESTIONS: RoutineSuggestion[] = [
     difficulty: 'easy',
     timeOfDay: 'anytime',
     pillarId: 'leisure',
-    activityType: 'rest',
   },
 ];
 

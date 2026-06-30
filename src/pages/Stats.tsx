@@ -59,21 +59,21 @@ export function Stats({ logs, routines, pillars }: StatsProps) {
     return { pillar, rate, completed, total };
   });
 
-  // Activity breakdown (last 30 days, leisure pillar only)
-  const leisureRoutines = activeRoutines.filter((r) => r.pillarId === 'leisure');
+  // Activity breakdown (last 30 days, health pillar physical routines)
+  const healthActivityRoutines = activeRoutines.filter((r) => r.pillarId === 'health' && r.activityType);
   const activityTypeCounts: Record<string, number> = {};
   const PHYSICAL_TYPES = ['gym', 'outdoor', 'sport'];
   last30.forEach((date) => {
     const log = logs.find((l) => l.date === date);
     if (!log) return;
-    leisureRoutines.forEach((r) => {
+    healthActivityRoutines.forEach((r) => {
       if (r.activityType && log.completedRoutineIds.includes(r.id)) {
         activityTypeCounts[r.activityType] = (activityTypeCounts[r.activityType] ?? 0) + 1;
       }
     });
   });
   const physicalDays = PHYSICAL_TYPES.reduce((sum, t) => sum + (activityTypeCounts[t] ?? 0), 0);
-  const hasLeisureData = leisureRoutines.length > 0;
+  const hasActivityData = healthActivityRoutines.length > 0;
 
   // Best weeks
   const logsWithData = logs.filter((l) => l.completedRoutineIds.length > 0);
@@ -315,14 +315,14 @@ export function Stats({ logs, routines, pillars }: StatsProps) {
         </div>
       </div>
 
-      {/* Activity breakdown */}
-      {hasLeisureData && (
+      {/* Activity breakdown — health pillar physical routines */}
+      {hasActivityData && (
         <div
           className="rounded-xl p-4"
           style={{ backgroundColor: '#13131A', border: '1px solid #1E1E2E' }}
         >
           <div className="flex items-center gap-2 mb-4">
-            <Activity size={14} color="#FF9F1C" />
+            <Activity size={14} color="#06D6A0" />
             <p
               style={{
                 fontFamily: 'Inter, sans-serif',
@@ -340,12 +340,12 @@ export function Stats({ logs, routines, pillars }: StatsProps) {
           {/* Physical total */}
           <div
             className="rounded-lg px-4 py-3 mb-3 flex items-center justify-between"
-            style={{ backgroundColor: '#0A0A0F', border: '1px solid #FF9F1C30' }}
+            style={{ backgroundColor: '#0A0A0F', border: '1px solid #06D6A030' }}
           >
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '13px', color: '#FF9F1C', fontWeight: 600 }}>
-              Physical Activity
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '13px', color: '#06D6A0', fontWeight: 600 }}>
+              Total Active Sessions
             </p>
-            <p style={{ fontFamily: '"Bebas Neue", sans-serif', fontSize: '22px', color: '#FF9F1C', letterSpacing: '0.04em' }}>
+            <p style={{ fontFamily: '"Bebas Neue", sans-serif', fontSize: '22px', color: '#06D6A0', letterSpacing: '0.04em' }}>
               {physicalDays}
               <span style={{ fontSize: '12px', color: '#6C757D', fontFamily: 'Inter, sans-serif', fontWeight: 400, marginLeft: '4px' }}>days</span>
             </p>
@@ -356,9 +356,6 @@ export function Stats({ logs, routines, pillars }: StatsProps) {
               { id: 'gym', label: 'GYM', color: '#06D6A0' },
               { id: 'outdoor', label: 'OUTDOOR', color: '#4CC9F0' },
               { id: 'sport', label: 'SPORT', color: '#E63946' },
-              { id: 'creative', label: 'CREATIVE', color: '#F72585' },
-              { id: 'social', label: 'SOCIAL', color: '#FFD166' },
-              { id: 'rest', label: 'REST', color: '#7209B7' },
             ].map(({ id, label, color }) => {
               const count = activityTypeCounts[id] ?? 0;
               return (

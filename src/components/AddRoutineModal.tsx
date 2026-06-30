@@ -30,13 +30,10 @@ function getTimeOfDayFromHour(hour: number): TimeOfDay {
   return 'night';
 }
 
-const ACTIVITY_TYPES: { id: ActivityType; label: string; color: string }[] = [
+const PHYSICAL_ACTIVITY_TYPES: { id: ActivityType; label: string; color: string }[] = [
   { id: 'gym', label: 'Gym', color: '#06D6A0' },
-  { id: 'outdoor', label: 'Outdoor', color: '#4CC9F0' },
+  { id: 'outdoor', label: 'Outdoor / Hike', color: '#4CC9F0' },
   { id: 'sport', label: 'Sport', color: '#E63946' },
-  { id: 'creative', label: 'Creative', color: '#F72585' },
-  { id: 'social', label: 'Social', color: '#FFD166' },
-  { id: 'rest', label: 'Rest', color: '#7209B7' },
 ];
 
 const DIFF_COLORS: Record<Difficulty, string> = {
@@ -285,7 +282,7 @@ export function AddRoutineModal({
       timeOfDay,
       timeBlock: timeBlockEnabled ? { start: timeStart, end: timeEnd } : undefined,
       deadline: deadlineEnabled && deadline ? deadline : undefined,
-      activityType: pillarId === 'leisure' ? activityType : undefined,
+      activityType: pillarId === 'health' ? activityType : undefined,
       isActive: true,
     });
     onClose();
@@ -571,12 +568,12 @@ export function AddRoutineModal({
                 </p>
               </div>
 
-              {/* Activity Type (leisure pillar only) */}
-              {pillarId === 'leisure' && (
+              {/* Activity Type (health pillar only — physical activities) */}
+              {pillarId === 'health' && (
                 <div>
                   <label style={labelStyle}>Activity Type</label>
                   <div className="flex gap-2 flex-wrap">
-                    {ACTIVITY_TYPES.map((a) => (
+                    {PHYSICAL_ACTIVITY_TYPES.map((a) => (
                       <button
                         key={a.id}
                         onClick={() => setActivityType(a.id)}
