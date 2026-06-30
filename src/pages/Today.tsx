@@ -17,8 +17,9 @@ interface TodayProps {
   onToggleRoutine: (routineId: string) => void;
 }
 
-const TIME_ORDER: Routine['timeOfDay'][] = ['morning', 'afternoon', 'evening', 'night', 'anytime'];
+const TIME_ORDER: Routine['timeOfDay'][] = ['allday', 'morning', 'afternoon', 'evening', 'night', 'anytime'];
 const TIME_LABELS: Record<Routine['timeOfDay'], string> = {
+  allday: 'ALL DAY',
   morning: 'MORNING',
   afternoon: 'AFTERNOON',
   evening: 'EVENING',
@@ -50,6 +51,7 @@ export function Today({ routines, pillars, todayLog, logs, profile, onToggleRout
 
   // Group routines by time of day
   const grouped: Record<Routine['timeOfDay'], Routine[]> = {
+    allday: [],
     morning: [],
     afternoon: [],
     evening: [],

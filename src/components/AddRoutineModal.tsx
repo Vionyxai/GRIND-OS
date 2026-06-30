@@ -21,7 +21,7 @@ type TimeOfDay = Routine['timeOfDay'];
 type Tab = 'suggestions' | 'custom';
 
 const DIFFICULTIES: Difficulty[] = ['easy', 'medium', 'hard'];
-const TIMES: TimeOfDay[] = ['morning', 'afternoon', 'evening', 'night', 'anytime'];
+const TIMES: TimeOfDay[] = ['morning', 'afternoon', 'evening', 'night', 'allday', 'anytime'];
 
 function getTimeOfDayFromHour(hour: number): TimeOfDay {
   if (hour >= 5 && hour < 12) return 'morning';
@@ -621,7 +621,7 @@ export function AddRoutineModal({
                         cursor: 'pointer',
                       } as React.CSSProperties}
                     >
-                      {t.charAt(0).toUpperCase() + t.slice(1)}
+                      {t === 'allday' ? 'All Day' : t.charAt(0).toUpperCase() + t.slice(1)}
                     </button>
                   ))}
                 </div>
