@@ -61,7 +61,14 @@ export interface WeekSummary {
   momentumPeak: number;
 }
 
-export type TabName = 'today' | 'pillars' | 'stats' | 'levelup' | 'settings';
+export type TabName = 'today' | 'pillars' | 'stats' | 'levelup' | 'settings' | 'time';
+
+export interface TimeCategory {
+  id: string;
+  label: string;
+  color: string;
+  hoursPerWeek: number;
+}
 
 export interface BadgeDefinition {
   id: string;

@@ -6,6 +6,7 @@ import { Pillars } from './pages/Pillars';
 import { Stats } from './pages/Stats';
 import { LevelUp } from './pages/LevelUp';
 import { Settings } from './pages/Settings';
+import { TimeDesign } from './pages/TimeDesign';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useDailyLog } from './hooks/useDailyLog';
 import { useGamification } from './hooks/useGamification';
@@ -199,6 +200,8 @@ export default function App() {
         return <Stats logs={logs} routines={routines} pillars={pillars} />;
       case 'levelup':
         return <LevelUp profile={profile} logs={logs} routines={routines} />;
+      case 'time':
+        return <TimeDesign />;
       case 'settings':
         return <Settings onDataReset={handleDataReset} onDataImport={handleDataImport} />;
       default:
