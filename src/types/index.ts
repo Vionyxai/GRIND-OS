@@ -67,7 +67,8 @@ export interface TimeCategory {
   id: string;
   label: string;
   color: string;
-  hoursPerWeek: number;
+  weekdayHoursPerDay: number; // Mon–Fri hours per day (0–24)
+  weekendHoursPerDay: number; // Sat–Sun hours per day (0–24)
 }
 
 export interface BadgeDefinition {

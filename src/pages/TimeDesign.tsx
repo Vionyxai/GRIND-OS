@@ -4,7 +4,9 @@ import { TimeCategory } from '../types';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { KEYS } from '../utils/storage';
 
-const TOTAL_HOURS = 168;
+const WEEKDAY_TOTAL = 120; // 5d × 24h
+const WEEKEND_TOTAL = 48;  // 2d × 24h
+const WEEK_TOTAL = 168;
 
 const PRESET_COLORS = [
   '#E63946', '#FF9F1C', '#FFD166', '#06D6A0',
@@ -12,17 +14,25 @@ const PRESET_COLORS = [
 ];
 
 const DEFAULT_CATEGORIES: TimeCategory[] = [
-  { id: 'tc-sleep', label: 'Sleep', color: '#7209B7', hoursPerWeek: 49 },
-  { id: 'tc-work', label: 'Work', color: '#4361EE', hoursPerWeek: 40 },
-  { id: 'tc-exercise', label: 'Exercise', color: '#06D6A0', hoursPerWeek: 5 },
-  { id: 'tc-meals', label: 'Meals & Prep', color: '#FF9F1C', hoursPerWeek: 7 },
+  { id: 'tc-sleep',    label: 'Sleep',         color: '#7209B7', weekdayHoursPerDay: 7, weekendHoursPerDay: 8 },
+  { id: 'tc-work',     label: '9-5 Work',      color: '#4361EE', weekdayHoursPerDay: 8, weekendHoursPerDay: 2 },
+  { id: 'tc-exercise', label: 'Exercise',       color: '#06D6A0', weekdayHoursPerDay: 1, weekendHoursPerDay: 2 },
+  { id: 'tc-meals',    label: 'Meals & Prep',  color: '#FF9F1C', weekdayHoursPerDay: 1, weekendHoursPerDay: 1 },
 ];
 
+type ViewMode = 'weekday' | 'weekend';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function migrate(raw: any): TimeCategory {
+  if (typeof raw.weekdayHoursPerDay === 'number') return raw as TimeCategory;
+  const daily = Math.round((raw.hoursPerWeek ?? 0) / 7);
+  return { id: raw.id, label: raw.label, color: raw.color, weekdayHoursPerDay: daily, weekendHoursPerDay: daily };
+}
+
 export function TimeDesign() {
-  const [categories, setCategories] = useLocalStorage<TimeCategory[]>(
-    KEYS.TIME_CATEGORIES,
-    DEFAULT_CATEGORIES
-  );
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [rawCats, setRawCats] = useLocalStorage<any[]>(KEYS.TIME_CATEGORIES, DEFAULT_CATEGORIES);
+  const [viewMode, setViewMode] = useState<ViewMode>('weekday');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -30,36 +40,57 @@ export function TimeDesign() {
   const [newLabel, setNewLabel] = useState('');
   const [newColor, setNewColor] = useState(PRESET_COLORS[0]);
 
-  const totalAllocated = categories.reduce((sum, c) => sum + c.hoursPerWeek, 0);
-  const unaccounted = TOTAL_HOURS - totalAllocated;
-  const isOver = unaccounted < 0;
+  const categories: TimeCategory[] = rawCats.map(migrate);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const setCategories = (updater: (prev: TimeCategory[]) => TimeCategory[]) => {
+    setRawCats(() => updater(categories));
+  };
+
+  const isWeekday = viewMode === 'weekday';
+  const periodTotal = isWeekday ? WEEKDAY_TOTAL : WEEKEND_TOTAL;
+  const periodDays = isWeekday ? 5 : 2;
+
+  const getHours = (cat: TimeCategory) =>
+    isWeekday ? cat.weekdayHoursPerDay : cat.weekendHoursPerDay;
+
+  const totalAllocatedPeriod = categories.reduce(
+    (sum, c) => sum + getHours(c) * periodDays, 0
+  );
+  const totalWeekHours = categories.reduce(
+    (sum, c) => sum + c.weekdayHoursPerDay * 5 + c.weekendHoursPerDay * 2, 0
+  );
+  const freePeriod = periodTotal - totalAllocatedPeriod;
+  const weekFree = WEEK_TOTAL - totalWeekHours;
+  const periodOver = freePeriod < 0;
 
   const updateHours = (id: string, delta: number) => {
+    const field = isWeekday ? 'weekdayHoursPerDay' : 'weekendHoursPerDay';
     setCategories((prev) =>
       prev.map((c) =>
-        c.id === id ? { ...c, hoursPerWeek: Math.max(0, Math.min(168, c.hoursPerWeek + delta)) } : c
+        c.id === id ? { ...c, [field]: Math.max(0, Math.min(24, c[field] + delta)) } : c
       )
     );
   };
 
   const startEdit = (cat: TimeCategory) => {
     setEditingId(cat.id);
-    setEditValue(String(cat.hoursPerWeek));
+    setEditValue(String(getHours(cat)));
   };
 
   const commitEdit = (id: string) => {
     const parsed = parseInt(editValue, 10);
     if (!isNaN(parsed)) {
+      const field = isWeekday ? 'weekdayHoursPerDay' : 'weekendHoursPerDay';
       setCategories((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, hoursPerWeek: Math.max(0, Math.min(168, parsed)) } : c))
+        prev.map((c) => (c.id === id ? { ...c, [field]: Math.max(0, Math.min(24, parsed)) } : c))
       );
     }
     setEditingId(null);
   };
 
-  const updateLabel = (id: string, label: string) => {
+  const updateLabel = (id: string, label: string) =>
     setCategories((prev) => prev.map((c) => (c.id === id ? { ...c, label } : c)));
-  };
 
   const deleteCategory = (id: string) => {
     setCategories((prev) => prev.filter((c) => c.id !== id));
@@ -72,7 +103,8 @@ export function TimeDesign() {
       id: `tc-${Date.now()}`,
       label: newLabel.trim(),
       color: newColor,
-      hoursPerWeek: 0,
+      weekdayHoursPerDay: 0,
+      weekendHoursPerDay: 0,
     };
     setCategories((prev) => [...prev, newCat]);
     setNewLabel('');
@@ -102,7 +134,96 @@ export function TimeDesign() {
         </p>
       </div>
 
-      {/* Allocation overview card */}
+      {/* Weekday / Weekend toggle */}
+      <div className="px-4 pb-4">
+        <div
+          className="flex rounded-xl overflow-hidden"
+          style={{ border: '1px solid #1E1E2E' }}
+        >
+          <button
+            onClick={() => setViewMode('weekday')}
+            style={{
+              flex: 1,
+              padding: '10px 0',
+              fontFamily: 'Inter, sans-serif',
+              fontSize: '12px',
+              fontWeight: 700,
+              letterSpacing: '0.05em',
+              backgroundColor: isWeekday ? '#4361EE' : 'transparent',
+              color: isWeekday ? '#F8F9FA' : '#6C757D',
+              border: 'none',
+              cursor: 'pointer',
+              WebkitTapHighlightColor: 'transparent',
+            } as React.CSSProperties}
+          >
+            WEEKDAYS
+            <span
+              style={{
+                display: 'block',
+                fontSize: '10px',
+                fontWeight: 400,
+                opacity: 0.75,
+                marginTop: '2px',
+              }}
+            >
+              MON – FRI · 120H
+            </span>
+          </button>
+          <button
+            onClick={() => setViewMode('weekend')}
+            style={{
+              flex: 1,
+              padding: '10px 0',
+              fontFamily: 'Inter, sans-serif',
+              fontSize: '12px',
+              fontWeight: 700,
+              letterSpacing: '0.05em',
+              backgroundColor: !isWeekday ? '#F72585' : 'transparent',
+              color: !isWeekday ? '#F8F9FA' : '#6C757D',
+              border: 'none',
+              borderLeft: '1px solid #1E1E2E',
+              cursor: 'pointer',
+              WebkitTapHighlightColor: 'transparent',
+            } as React.CSSProperties}
+          >
+            WEEKEND
+            <span
+              style={{
+                display: 'block',
+                fontSize: '10px',
+                fontWeight: 400,
+                opacity: 0.75,
+                marginTop: '2px',
+              }}
+            >
+              SAT – SUN · 48H
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {/* Weekend note */}
+      {!isWeekday && (
+        <div className="px-4 mb-3">
+          <div
+            className="rounded-lg px-3 py-2"
+            style={{ backgroundColor: '#F7258510', border: '1px solid #F7258525' }}
+          >
+            <p
+              style={{
+                fontFamily: 'Inter, sans-serif',
+                fontSize: '11px',
+                color: '#F72585',
+                lineHeight: '1.4',
+              }}
+            >
+              Hours are set per day and averaged across Sat + Sun — so half-day Saturday (4h) + full Sunday off (0h) = 2h/day here.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Overview card */}
       <div className="px-4 pb-4">
         <div
           className="rounded-xl p-4"
@@ -111,19 +232,22 @@ export function TimeDesign() {
           {/* Segmented bar */}
           <div
             className="flex w-full rounded-full overflow-hidden mb-3"
-            style={{ height: '14px', backgroundColor: '#1E1E2E' }}
+            style={{ height: '12px', backgroundColor: '#1E1E2E' }}
           >
-            {categories.map((cat) => (
-              <div
-                key={cat.id}
-                style={{
-                  width: `${Math.max(0, (cat.hoursPerWeek / TOTAL_HOURS) * 100)}%`,
-                  backgroundColor: cat.color,
-                  transition: 'width 0.3s ease',
-                  minWidth: cat.hoursPerWeek > 0 ? '3px' : '0',
-                }}
-              />
-            ))}
+            {categories.map((cat) => {
+              const hrs = getHours(cat) * periodDays;
+              return (
+                <div
+                  key={cat.id}
+                  style={{
+                    width: `${Math.max(0, (hrs / periodTotal) * 100)}%`,
+                    backgroundColor: cat.color,
+                    transition: 'width 0.3s ease',
+                    minWidth: hrs > 0 ? '3px' : '0',
+                  }}
+                />
+              );
+            })}
           </div>
 
           {/* Legend */}
@@ -140,11 +264,7 @@ export function TimeDesign() {
                   }}
                 />
                 <span
-                  style={{
-                    fontFamily: 'Inter, sans-serif',
-                    fontSize: '10px',
-                    color: '#6C757D',
-                  }}
+                  style={{ fontFamily: 'Inter, sans-serif', fontSize: '10px', color: '#6C757D' }}
                 >
                   {cat.label}
                 </span>
@@ -152,7 +272,7 @@ export function TimeDesign() {
             ))}
           </div>
 
-          {/* Stats row */}
+          {/* Planned vs free */}
           <div
             className="flex items-center justify-between pt-3"
             style={{ borderTop: '1px solid #1E1E2E' }}
@@ -161,39 +281,91 @@ export function TimeDesign() {
               <span
                 style={{
                   fontFamily: 'Bebas Neue, sans-serif',
-                  fontSize: '34px',
+                  fontSize: '30px',
                   color: '#F8F9FA',
                   letterSpacing: '0.04em',
                 }}
               >
-                {totalAllocated}
+                {totalAllocatedPeriod}
               </span>
               <span
                 style={{
                   fontFamily: 'Inter, sans-serif',
-                  fontSize: '13px',
+                  fontSize: '12px',
                   color: '#6C757D',
-                  marginLeft: '6px',
+                  marginLeft: '5px',
                 }}
               >
-                / 168 hrs planned
+                / {periodTotal}h {isWeekday ? 'weekday' : 'weekend'}
               </span>
             </div>
             <div style={{ textAlign: 'right' }}>
               <p
                 style={{
                   fontFamily: 'Bebas Neue, sans-serif',
-                  fontSize: '22px',
-                  color: isOver ? '#E63946' : unaccounted === 0 ? '#06D6A0' : unaccounted <= 20 ? '#FFD166' : '#6C757D',
+                  fontSize: '20px',
                   letterSpacing: '0.04em',
+                  color: periodOver
+                    ? '#E63946'
+                    : freePeriod === 0
+                    ? '#06D6A0'
+                    : freePeriod <= 12
+                    ? '#FFD166'
+                    : '#6C757D',
                 }}
               >
-                {isOver ? `${Math.abs(unaccounted)}H OVER` : unaccounted === 0 ? 'FULL WEEK' : `${unaccounted}H FREE`}
+                {periodOver
+                  ? `${Math.abs(freePeriod)}H OVER`
+                  : freePeriod === 0
+                  ? 'FULL'
+                  : `${freePeriod}H FREE`}
               </p>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '11px', color: '#6C757D' }}>
-                {isOver ? 'exceeds 168h' : unaccounted === 0 ? 'every hour accounted' : 'unplanned time'}
+              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '10px', color: '#6C757D' }}>
+                {isWeekday ? 'Mon–Fri' : 'Sat–Sun'}
               </p>
             </div>
+          </div>
+
+          {/* Full week total */}
+          <div
+            className="flex items-center justify-between mt-3 pt-3"
+            style={{ borderTop: '1px solid #1E1E2E' }}
+          >
+            <span
+              style={{ fontFamily: 'Inter, sans-serif', fontSize: '11px', color: '#6C757D' }}
+            >
+              Full week total (168h)
+            </span>
+            <span
+              style={{
+                fontFamily: 'Bebas Neue, sans-serif',
+                fontSize: '16px',
+                letterSpacing: '0.04em',
+                color:
+                  weekFree < 0
+                    ? '#E63946'
+                    : weekFree === 0
+                    ? '#06D6A0'
+                    : weekFree <= 20
+                    ? '#FFD166'
+                    : '#6C757D',
+              }}
+            >
+              {totalWeekHours} / 168H
+              {weekFree > 0 && (
+                <span
+                  style={{
+                    fontFamily: 'Inter, sans-serif',
+                    fontSize: '10px',
+                    fontWeight: 400,
+                    marginLeft: '5px',
+                    color: '#6C757D',
+                  }}
+                >
+                  ({weekFree}h free)
+                </span>
+              )}
+            </span>
           </div>
         </div>
       </div>
@@ -201,11 +373,12 @@ export function TimeDesign() {
       {/* Category cards */}
       <div className="px-4 space-y-2 pb-4">
         {categories.map((cat) => {
-          const pct = TOTAL_HOURS > 0 ? Math.round((cat.hoursPerWeek / TOTAL_HOURS) * 100) : 0;
-          const hrsPerDay = (cat.hoursPerWeek / 7).toFixed(1);
-          const minsPerDay = Math.round((cat.hoursPerWeek / 7) * 60);
+          const dayHrs = getHours(cat);
+          const periodHrs = dayHrs * periodDays;
+          const pct = Math.round((periodHrs / periodTotal) * 100);
+          const weekHrs = cat.weekdayHoursPerDay * 5 + cat.weekendHoursPerDay * 2;
           const isDeleting = confirmDeleteId === cat.id;
-          const isEditingHours = editingId === cat.id;
+          const isEditingThis = editingId === cat.id;
 
           return (
             <div
@@ -216,7 +389,7 @@ export function TimeDesign() {
                 border: `1px solid ${cat.color}25`,
               }}
             >
-              {/* Top row: color dot + name + hours control */}
+              {/* Top row: dot + label + hour control */}
               <div className="flex items-center gap-3">
                 <div
                   style={{
@@ -227,8 +400,6 @@ export function TimeDesign() {
                     flexShrink: 0,
                   }}
                 />
-
-                {/* Editable label */}
                 <input
                   value={cat.label}
                   onChange={(e) => updateLabel(cat.id, e.target.value)}
@@ -245,7 +416,6 @@ export function TimeDesign() {
                   }}
                 />
 
-                {/* Hours control */}
                 <div className="flex items-center gap-1" style={{ flexShrink: 0 }}>
                   <button
                     onClick={() => updateHours(cat.id, -1)}
@@ -268,7 +438,7 @@ export function TimeDesign() {
                     −
                   </button>
 
-                  {isEditingHours ? (
+                  {isEditingThis ? (
                     <input
                       autoFocus
                       value={editValue}
@@ -308,7 +478,7 @@ export function TimeDesign() {
                         padding: '0',
                       }}
                     >
-                      {cat.hoursPerWeek}h
+                      {dayHrs}H
                     </button>
                   )}
 
@@ -355,25 +525,11 @@ export function TimeDesign() {
                 className="flex items-center justify-between"
                 style={{ marginLeft: '18px' }}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span
-                    style={{
-                      fontFamily: 'Inter, sans-serif',
-                      fontSize: '11px',
-                      color: '#6C757D',
-                    }}
+                    style={{ fontFamily: 'Inter, sans-serif', fontSize: '11px', color: '#6C757D' }}
                   >
-                    {hrsPerDay}h/day
-                  </span>
-                  <span style={{ color: '#1E1E2E', fontSize: '10px' }}>·</span>
-                  <span
-                    style={{
-                      fontFamily: 'Inter, sans-serif',
-                      fontSize: '11px',
-                      color: '#6C757D',
-                    }}
-                  >
-                    {minsPerDay}min/day
+                    {dayHrs}h/day
                   </span>
                   <span style={{ color: '#1E1E2E', fontSize: '10px' }}>·</span>
                   <span
@@ -385,6 +541,12 @@ export function TimeDesign() {
                     }}
                   >
                     {pct}%
+                  </span>
+                  <span style={{ color: '#1E1E2E', fontSize: '10px' }}>·</span>
+                  <span
+                    style={{ fontFamily: 'Inter, sans-serif', fontSize: '11px', color: '#6C757D' }}
+                  >
+                    {weekHrs}h/wk
                   </span>
                 </div>
 
@@ -472,9 +634,20 @@ export function TimeDesign() {
             >
               NEW CATEGORY
             </p>
+            <p
+              style={{
+                fontFamily: 'Inter, sans-serif',
+                fontSize: '11px',
+                color: '#6C757D',
+                marginBottom: '10px',
+                lineHeight: '1.4',
+              }}
+            >
+              Added with 0h on both weekday and weekend — set each tab separately.
+            </p>
             <input
               autoFocus
-              placeholder="e.g. Family time, Commute, Side project..."
+              placeholder="e.g. AI Work, Family, Commute, Free time..."
               value={newLabel}
               onChange={(e) => setNewLabel(e.target.value)}
               onKeyDown={(e) => {
