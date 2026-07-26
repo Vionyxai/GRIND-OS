@@ -6,6 +6,8 @@ const KEYS = {
   WEEK_SUMMARIES: 'grindos_week_summaries',
   INITIALIZED: 'grindos_initialized',
   TIME_CATEGORIES: 'grindos_time_categories_v2',
+  INTEGRATION_SETTINGS: 'grindos_integration_settings',
+  LEARNINGAI_DAILY_COUNTS: 'grindos_learningai_daily_counts',
 };
 
 export function getItem<T>(key: string, fallback: T): T {

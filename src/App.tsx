@@ -7,13 +7,31 @@ import { Stats } from './pages/Stats';
 import { LevelUp } from './pages/LevelUp';
 import { Settings } from './pages/Settings';
 import { TimeDesign } from './pages/TimeDesign';
+import { AuthGate } from './components/AuthGate';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useDailyLog } from './hooks/useDailyLog';
 import { useGamification } from './hooks/useGamification';
+import { useAuth } from './hooks/useAuth';
+import { useCloudSync } from './hooks/useCloudSync';
+import { useLearningActivityFeed } from './hooks/useLearningActivityFeed';
 import { KEYS } from './utils/storage';
 import { DEFAULT_PILLARS } from './data/pillars';
 import { DEFAULT_ROUTINES } from './data/defaultRoutines';
 import { getTodayString } from './utils/dates';
+
+export interface IntegrationSettings {
+  enabled: boolean;
+  learningaiRoutineIds: string[];
+  bonusXpEnabled: boolean;
+}
+
+const DEFAULT_INTEGRATION_SETTINGS: IntegrationSettings = {
+  enabled: false,
+  learningaiRoutineIds: [],
+  bonusXpEnabled: false,
+};
+
+const LEARNINGAI_SYNC_ROUTINE_ID = 'learningai-sync';
 
 const DEFAULT_PROFILE = {
   name: 'Grinder',
@@ -30,7 +48,12 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<TabName>('today');
   const [pillars, setPillars] = useLocalStorage<Pillar[]>(KEYS.PILLARS, DEFAULT_PILLARS);
   const [routines, setRoutines] = useLocalStorage<Routine[]>(KEYS.ROUTINES, DEFAULT_ROUTINES);
+  const [integrationSettings, setIntegrationSettings] = useLocalStorage<IntegrationSettings>(
+    KEYS.INTEGRATION_SETTINGS,
+    DEFAULT_INTEGRATION_SETTINGS
+  );
   const { profile, setProfile, checkBadges, updateStreak } = useGamification();
+  const auth = useAuth();
 
   // Initialize on first launch
   useEffect(() => {
@@ -89,6 +112,37 @@ export default function App() {
     activeRoutines,
     profile.currentStreak,
     weeklyAvg
+  );
+
+  // Auto-create the linked routine the first time LearningAI sync is enabled
+  useEffect(() => {
+    if (!integrationSettings.enabled || integrationSettings.learningaiRoutineIds.length > 0) return;
+    setRoutines((prev) => {
+      if (prev.find((r) => r.id === LEARNINGAI_SYNC_ROUTINE_ID)) return prev;
+      return [
+        ...prev,
+        {
+          id: LEARNINGAI_SYNC_ROUTINE_ID,
+          pillarId: 'skills',
+          title: 'LearningAI progress',
+          description: 'Auto-completed when you finish a task or project in LearningAI.',
+          difficulty: 'medium',
+          timeOfDay: 'anytime',
+          isActive: true,
+          createdAt: new Date().toISOString(),
+        },
+      ];
+    });
+    setIntegrationSettings((prev) => ({ ...prev, learningaiRoutineIds: [LEARNINGAI_SYNC_ROUTINE_ID] }));
+  }, [integrationSettings.enabled, integrationSettings.learningaiRoutineIds, setRoutines, setIntegrationSettings]);
+
+  const cloudSync = useCloudSync(auth.session, routines, logs, pillars, profile);
+
+  useLearningActivityFeed(
+    auth.session,
+    integrationSettings.enabled ? integrationSettings.learningaiRoutineIds : [],
+    completeRoutine,
+    uncompleteRoutine
   );
 
   // Sync XP and badges when today's log changes
@@ -203,28 +257,40 @@ export default function App() {
       case 'time':
         return <TimeDesign />;
       case 'settings':
-        return <Settings onDataReset={handleDataReset} onDataImport={handleDataImport} />;
+        return (
+          <Settings
+            onDataReset={handleDataReset}
+            onDataImport={handleDataImport}
+            auth={auth}
+            cloudSync={cloudSync}
+            routines={routines}
+            integrationSettings={integrationSettings}
+            onChangeIntegrationSettings={setIntegrationSettings}
+          />
+        );
       default:
         return null;
     }
   };
 
   return (
-    <div
-      className="min-h-screen overflow-x-hidden"
-      style={{ backgroundColor: '#0A0A0F', maxWidth: '640px', margin: '0 auto' }}
-    >
-      {/* Page content with bottom padding for nav */}
+    <AuthGate>
       <div
-        style={{
-          paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))',
-          paddingTop: 'env(safe-area-inset-top, 0px)',
-        }}
+        className="min-h-screen overflow-x-hidden"
+        style={{ backgroundColor: '#0A0A0F', maxWidth: '640px', margin: '0 auto' }}
       >
-        {renderPage()}
-      </div>
+        {/* Page content with bottom padding for nav */}
+        <div
+          style={{
+            paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))',
+            paddingTop: 'env(safe-area-inset-top, 0px)',
+          }}
+        >
+          {renderPage()}
+        </div>
 
-      <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
-    </div>
+        <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+      </div>
+    </AuthGate>
   );
 }
