@@ -13,12 +13,7 @@ const PRESET_COLORS = [
   '#4CC9F0', '#7209B7', '#F72585', '#4361EE',
 ];
 
-const DEFAULT_CATEGORIES: TimeCategory[] = [
-  { id: 'tc-sleep',    label: 'Sleep',         color: '#7209B7', weekdayHoursPerDay: 7, weekendHoursPerDay: 8 },
-  { id: 'tc-work',     label: '9-5 Work',      color: '#4361EE', weekdayHoursPerDay: 8, weekendHoursPerDay: 2 },
-  { id: 'tc-exercise', label: 'Exercise',       color: '#06D6A0', weekdayHoursPerDay: 1, weekendHoursPerDay: 2 },
-  { id: 'tc-meals',    label: 'Meals & Prep',  color: '#FF9F1C', weekdayHoursPerDay: 1, weekendHoursPerDay: 1 },
-];
+const DEFAULT_CATEGORIES: TimeCategory[] = [];
 
 type ViewMode = 'weekday' | 'weekend';
 
@@ -369,6 +364,21 @@ export function TimeDesign() {
           </div>
         </div>
       </div>
+
+      {/* Empty state */}
+      {categories.length === 0 && (
+        <div className="px-4 pb-4 flex flex-col items-center justify-center py-10 gap-3">
+          <Clock size={36} color="#1E1E2E" />
+          <div className="text-center">
+            <p style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '20px', color: '#6C757D', letterSpacing: '0.05em' }}>
+              YOUR WEEK IS BLANK
+            </p>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '13px', color: '#6C757D', marginTop: '4px' }}>
+              Add your first category below and start filling in your 168 hours.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Category cards */}
       <div className="px-4 space-y-2 pb-4">

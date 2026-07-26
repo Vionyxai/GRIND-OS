@@ -5,7 +5,7 @@ const KEYS = {
   PROFILE: 'grindos_profile',
   WEEK_SUMMARIES: 'grindos_week_summaries',
   INITIALIZED: 'grindos_initialized',
-  TIME_CATEGORIES: 'grindos_time_categories',
+  TIME_CATEGORIES: 'grindos_time_categories_v2',
 };
 
 export function getItem<T>(key: string, fallback: T): T {
