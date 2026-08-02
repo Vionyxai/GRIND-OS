@@ -31,6 +31,9 @@ GRIND OS is a mobile-first React PWA for habit tracking with XP/streak/momentum 
 ## Repo Layout
 
 ```
+connectors/
+  TEMPLATE.md                    # Fill this in for any new app, then ask Claude to build the integration
+  LEARNINGAI.md                  # Ready-to-use integration brief for the LearningAI Claude agent
 src/
   App.tsx                        # Root: state wiring, tab routing, hook composition
   types/index.ts                 # All shared TypeScript types
