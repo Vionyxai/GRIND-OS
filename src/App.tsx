@@ -13,25 +13,11 @@ import { useDailyLog } from './hooks/useDailyLog';
 import { useGamification } from './hooks/useGamification';
 import { useAuth } from './hooks/useAuth';
 import { useCloudSync } from './hooks/useCloudSync';
-import { useLearningActivityFeed } from './hooks/useLearningActivityFeed';
+import { useConnectorFeed } from './hooks/useConnectorFeed';
 import { KEYS } from './utils/storage';
 import { DEFAULT_PILLARS } from './data/pillars';
 import { DEFAULT_ROUTINES } from './data/defaultRoutines';
 import { getTodayString } from './utils/dates';
-
-export interface IntegrationSettings {
-  enabled: boolean;
-  learningaiRoutineIds: string[];
-  bonusXpEnabled: boolean;
-}
-
-const DEFAULT_INTEGRATION_SETTINGS: IntegrationSettings = {
-  enabled: false,
-  learningaiRoutineIds: [],
-  bonusXpEnabled: false,
-};
-
-const LEARNINGAI_SYNC_ROUTINE_ID = 'learningai-sync';
 
 const DEFAULT_PROFILE = {
   name: 'Grinder',
@@ -48,10 +34,6 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<TabName>('today');
   const [pillars, setPillars] = useLocalStorage<Pillar[]>(KEYS.PILLARS, DEFAULT_PILLARS);
   const [routines, setRoutines] = useLocalStorage<Routine[]>(KEYS.ROUTINES, DEFAULT_ROUTINES);
-  const [integrationSettings, setIntegrationSettings] = useLocalStorage<IntegrationSettings>(
-    KEYS.INTEGRATION_SETTINGS,
-    DEFAULT_INTEGRATION_SETTINGS
-  );
   const { profile, setProfile, checkBadges, updateStreak } = useGamification();
   const auth = useAuth();
 
@@ -114,36 +96,9 @@ export default function App() {
     weeklyAvg
   );
 
-  // Auto-create the linked routine the first time LearningAI sync is enabled
-  useEffect(() => {
-    if (!integrationSettings.enabled || integrationSettings.learningaiRoutineIds.length > 0) return;
-    setRoutines((prev) => {
-      if (prev.find((r) => r.id === LEARNINGAI_SYNC_ROUTINE_ID)) return prev;
-      return [
-        ...prev,
-        {
-          id: LEARNINGAI_SYNC_ROUTINE_ID,
-          pillarId: 'skills',
-          title: 'LearningAI progress',
-          description: 'Auto-completed when you finish a task or project in LearningAI.',
-          difficulty: 'medium',
-          timeOfDay: 'anytime',
-          isActive: true,
-          createdAt: new Date().toISOString(),
-        },
-      ];
-    });
-    setIntegrationSettings((prev) => ({ ...prev, learningaiRoutineIds: [LEARNINGAI_SYNC_ROUTINE_ID] }));
-  }, [integrationSettings.enabled, integrationSettings.learningaiRoutineIds, setRoutines, setIntegrationSettings]);
-
   const cloudSync = useCloudSync(auth.session, routines, logs, pillars, profile);
 
-  useLearningActivityFeed(
-    auth.session,
-    integrationSettings.enabled ? integrationSettings.learningaiRoutineIds : [],
-    completeRoutine,
-    uncompleteRoutine
-  );
+  useConnectorFeed(auth.session, completeRoutine, uncompleteRoutine);
 
   // Sync XP and badges when today's log changes
   useEffect(() => {
@@ -264,8 +219,6 @@ export default function App() {
             auth={auth}
             cloudSync={cloudSync}
             routines={routines}
-            integrationSettings={integrationSettings}
-            onChangeIntegrationSettings={setIntegrationSettings}
           />
         );
       default:

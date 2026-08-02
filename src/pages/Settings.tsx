@@ -1,10 +1,10 @@
-import { useState, useRef } from 'react';
-import { Download, Upload, Trash2, Info, Cloud, LogIn, LogOut, Link2 } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Download, Upload, Trash2, Info, Cloud, LogIn, LogOut, Plug, Plus, X } from 'lucide-react';
 import type { Session } from '@supabase/supabase-js';
 import { exportAllData, importAllData } from '../utils/storage';
 import type { SyncStatus, CloudConflict } from '../hooks/useCloudSync';
-import type { IntegrationSettings } from '../App';
 import { Routine } from '../types';
+import { supabase } from '../lib/supabaseClient';
 
 interface AuthState {
   session: Session | null;
@@ -30,13 +30,239 @@ interface SettingsProps {
   auth: AuthState;
   cloudSync: CloudSyncState;
   routines: Routine[];
-  integrationSettings: IntegrationSettings;
-  onChangeIntegrationSettings: (value: IntegrationSettings | ((prev: IntegrationSettings) => IntegrationSettings)) => void;
 }
+
+interface ConnectorRow {
+  app_id: string;
+  display_name: string;
+  pillar_id: string;
+  linked_routine_ids: string[];
+  enabled: boolean;
+}
+
+const PILLAR_OPTIONS = [
+  { id: 'health', label: 'Health & Body' },
+  { id: 'money', label: 'Money & Business' },
+  { id: 'relationships', label: 'Relationships' },
+  { id: 'mental', label: 'Mental / Spiritual' },
+  { id: 'skills', label: 'Skills & Learning' },
+  { id: 'leisure', label: 'Leisure & Play' },
+];
 
 const cardStyle: React.CSSProperties = { backgroundColor: '#13131A', border: '1px solid #1E1E2E' };
 const rowLabelStyle: React.CSSProperties = { fontFamily: 'Inter, sans-serif', fontSize: '15px', fontWeight: 500, color: '#F8F9FA' };
 const rowSubStyle: React.CSSProperties = { fontFamily: 'Inter, sans-serif', fontSize: '12px', color: '#6C757D', marginTop: '1px' };
+const sectionLabelStyle: React.CSSProperties = { fontFamily: 'Inter, sans-serif', fontSize: '13px', color: '#6C757D', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.06em' };
+const inputStyle: React.CSSProperties = { width: '100%', backgroundColor: '#0A0A0F', border: '1px solid #1E1E2E', borderRadius: '8px', padding: '10px', fontSize: '14px', color: '#F8F9FA', fontFamily: 'Inter, sans-serif', outline: 'none' };
+
+function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      onClick={() => onChange(!on)}
+      style={{
+        width: '44px', height: '26px', borderRadius: '13px',
+        backgroundColor: on ? '#06D6A0' : '#1E1E2E',
+        border: 'none', position: 'relative', cursor: 'pointer', flexShrink: 0,
+      }}
+    >
+      <div style={{
+        width: '20px', height: '20px', borderRadius: '50%',
+        backgroundColor: '#F8F9FA', position: 'absolute', top: '3px',
+        left: on ? '21px' : '3px', transition: 'left 0.2s',
+      }} />
+    </button>
+  );
+}
+
+function ConnectedAppsPanel({ session, routines }: { session: Session; routines: Routine[] }) {
+  const [connectors, setConnectors] = useState<ConnectorRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newApp, setNewApp] = useState({ app_id: '', display_name: '', pillar_id: 'skills' });
+  const [addError, setAddError] = useState('');
+
+  const fetchConnectors = async () => {
+    if (!supabase) return;
+    setLoading(true);
+    const { data } = await supabase
+      .from('connector_registry')
+      .select('app_id, display_name, pillar_id, linked_routine_ids, enabled')
+      .eq('user_id', session.user.id)
+      .order('registered_at', { ascending: true });
+    setConnectors((data as ConnectorRow[]) ?? []);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchConnectors(); }, [session.user.id]);
+
+  const toggleEnabled = async (appId: string, enabled: boolean) => {
+    if (!supabase) return;
+    setConnectors((prev) => prev.map((c) => c.app_id === appId ? { ...c, enabled } : c));
+    await supabase.from('connector_registry').update({ enabled }).eq('app_id', appId).eq('user_id', session.user.id);
+  };
+
+  const updateLinkedRoutine = async (appId: string, routineId: string) => {
+    if (!supabase) return;
+    const ids = routineId ? [routineId] : [];
+    setConnectors((prev) => prev.map((c) => c.app_id === appId ? { ...c, linked_routine_ids: ids } : c));
+    await supabase.from('connector_registry').update({ linked_routine_ids: ids }).eq('app_id', appId).eq('user_id', session.user.id);
+  };
+
+  const removeConnector = async (appId: string) => {
+    if (!supabase) return;
+    setConnectors((prev) => prev.filter((c) => c.app_id !== appId));
+    await supabase.from('connector_registry').delete().eq('app_id', appId).eq('user_id', session.user.id);
+  };
+
+  const addConnector = async () => {
+    if (!supabase) return;
+    if (!newApp.app_id.trim() || !newApp.display_name.trim()) {
+      setAddError('App ID and display name are required.');
+      return;
+    }
+    const { error } = await supabase.from('connector_registry').upsert({
+      app_id: newApp.app_id.trim().toLowerCase(),
+      user_id: session.user.id,
+      display_name: newApp.display_name.trim(),
+      pillar_id: newApp.pillar_id,
+      linked_routine_ids: [],
+      enabled: true,
+    }, { onConflict: 'app_id,user_id' });
+    if (error) { setAddError(error.message); return; }
+    setNewApp({ app_id: '', display_name: '', pillar_id: 'skills' });
+    setAddError('');
+    setShowAddForm(false);
+    fetchConnectors();
+  };
+
+  if (loading) {
+    return <p style={rowSubStyle}>Loading connected apps…</p>;
+  }
+
+  const pillarLabel = (id: string) => PILLAR_OPTIONS.find((p) => p.id === id)?.label ?? id;
+  const pillarRoutines = (pillarId: string) => routines.filter((r) => r.pillarId === pillarId && r.isActive);
+
+  return (
+    <div className="space-y-3">
+      {connectors.length === 0 && !showAddForm && (
+        <p style={rowSubStyle}>
+          No apps connected yet. When another app calls <code style={{ color: '#4CC9F0', fontSize: '11px' }}>registerApp()</code> with your account, it will appear here.
+        </p>
+      )}
+
+      {connectors.map((connector) => {
+        const options = pillarRoutines(connector.pillar_id);
+        const linkedId = connector.linked_routine_ids[0] ?? '';
+        return (
+          <div
+            key={connector.app_id}
+            className="rounded-lg p-3"
+            style={{ backgroundColor: '#0A0A0F', border: '1px solid #1E1E2E' }}
+          >
+            <div className="flex items-center justify-between gap-2">
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '14px', fontWeight: 600, color: '#F8F9FA' }}>
+                  {connector.display_name}
+                </p>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '11px', color: '#6C757D' }}>
+                  {connector.app_id} · {pillarLabel(connector.pillar_id)}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Toggle on={connector.enabled} onChange={(v) => toggleEnabled(connector.app_id, v)} />
+                <button
+                  onClick={() => removeConnector(connector.app_id)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: '#6C757D' }}
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            </div>
+
+            {connector.enabled && (
+              <div style={{ marginTop: '10px' }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '11px', color: '#6C757D', marginBottom: '6px' }}>
+                  Auto-complete which routine?
+                </p>
+                {options.length === 0 ? (
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '11px', color: '#E63946' }}>
+                    No active routines in {pillarLabel(connector.pillar_id)}. Add one first.
+                  </p>
+                ) : (
+                  <select
+                    value={linkedId}
+                    onChange={(e) => updateLinkedRoutine(connector.app_id, e.target.value)}
+                    style={{ ...inputStyle, fontSize: '13px', padding: '8px' }}
+                  >
+                    <option value="">— none —</option>
+                    {options.map((r) => (
+                      <option key={r.id} value={r.id}>{r.title}</option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
+
+      {showAddForm ? (
+        <div className="rounded-lg p-3 space-y-2" style={{ backgroundColor: '#0A0A0F', border: '1px solid #4CC9F0' }}>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '13px', fontWeight: 600, color: '#F8F9FA' }}>
+            Register app manually
+          </p>
+          <p style={{ ...rowSubStyle, marginTop: 0 }}>
+            Apps that use the Connector SDK register automatically. Use this only if you need to pre-register.
+          </p>
+          <input
+            placeholder="App ID (e.g. learningai)"
+            value={newApp.app_id}
+            onChange={(e) => setNewApp((p) => ({ ...p, app_id: e.target.value }))}
+            style={inputStyle}
+          />
+          <input
+            placeholder="Display name (e.g. LearningAI)"
+            value={newApp.display_name}
+            onChange={(e) => setNewApp((p) => ({ ...p, display_name: e.target.value }))}
+            style={inputStyle}
+          />
+          <select
+            value={newApp.pillar_id}
+            onChange={(e) => setNewApp((p) => ({ ...p, pillar_id: e.target.value }))}
+            style={inputStyle}
+          >
+            {PILLAR_OPTIONS.map((p) => (
+              <option key={p.id} value={p.id}>{p.label}</option>
+            ))}
+          </select>
+          {addError && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', color: '#E63946' }}>{addError}</p>}
+          <div className="flex gap-2">
+            <button
+              onClick={() => { setShowAddForm(false); setAddError(''); }}
+              style={{ flex: 1, borderRadius: '8px', padding: '10px', backgroundColor: '#1E1E2E', color: '#F8F9FA', fontFamily: 'Inter, sans-serif', fontSize: '13px', border: 'none', cursor: 'pointer' }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={addConnector}
+              style={{ flex: 1, borderRadius: '8px', padding: '10px', backgroundColor: '#4CC9F0', color: '#0A0A0F', fontFamily: 'Inter, sans-serif', fontSize: '13px', fontWeight: 700, border: 'none', cursor: 'pointer' }}
+            >
+              Register
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          onClick={() => setShowAddForm(true)}
+          className="flex items-center gap-2 rounded-lg px-3 py-2"
+          style={{ backgroundColor: '#1E1E2E', border: 'none', color: '#6C757D', fontFamily: 'Inter, sans-serif', fontSize: '13px', cursor: 'pointer' }}
+        >
+          <Plus size={14} /> Add app manually
+        </button>
+      )}
+    </div>
+  );
+}
 
 export function Settings({
   onDataReset,
@@ -44,8 +270,6 @@ export function Settings({
   auth,
   cloudSync,
   routines,
-  integrationSettings,
-  onChangeIntegrationSettings,
 }: SettingsProps) {
   const [resetStep, setResetStep] = useState<'idle' | 'confirm' | 'type'>('idle');
   const [resetInput, setResetInput] = useState('');
@@ -55,9 +279,6 @@ export function Settings({
   const [emailSent, setEmailSent] = useState(false);
   const [authError, setAuthError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const skillsRoutines = routines.filter((r) => r.pillarId === 'skills');
-  const linkedRoutineId = integrationSettings.learningaiRoutineIds[0] ?? '';
 
   const handleSignIn = async () => {
     if (!email) return;
@@ -138,9 +359,7 @@ export function Settings({
         <div className="rounded-xl overflow-hidden p-4" style={cardStyle}>
           <div className="flex items-center gap-3 mb-3">
             <LogIn size={16} color="#6C757D" />
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '13px', color: '#6C757D', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              ACCOUNT
-            </p>
+            <p style={sectionLabelStyle}>ACCOUNT</p>
           </div>
           {auth.session ? (
             <div className="flex items-center justify-between gap-3">
@@ -159,7 +378,7 @@ export function Settings({
             </p>
           ) : (
             <div className="flex flex-col gap-2">
-              <p style={rowSubStyle}>Sign in to sync across devices and connect LearningAI.</p>
+              <p style={rowSubStyle}>Sign in to sync across devices and connect other apps.</p>
               <div className="flex gap-2">
                 <input
                   type="email"
@@ -187,9 +406,7 @@ export function Settings({
         <div className="rounded-xl overflow-hidden p-4" style={cardStyle}>
           <div className="flex items-center gap-3 mb-3">
             <Cloud size={16} color="#6C757D" />
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '13px', color: '#6C757D', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              CLOUD SYNC
-            </p>
+            <p style={sectionLabelStyle}>CLOUD SYNC</p>
           </div>
 
           {cloudSync.conflict ? (
@@ -243,70 +460,14 @@ export function Settings({
         </div>
       )}
 
-      {/* LearningAI Link */}
+      {/* Connected Apps */}
       {auth.configured && auth.session && (
         <div className="rounded-xl overflow-hidden p-4" style={cardStyle}>
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3">
-              <Link2 size={16} color="#6C757D" />
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '13px', color: '#6C757D', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                LEARNINGAI
-              </p>
-            </div>
-            <button
-              onClick={() =>
-                onChangeIntegrationSettings((prev) => ({ ...prev, enabled: !prev.enabled }))
-              }
-              style={{
-                width: '44px',
-                height: '26px',
-                borderRadius: '13px',
-                backgroundColor: integrationSettings.enabled ? '#06D6A0' : '#1E1E2E',
-                border: 'none',
-                position: 'relative',
-                cursor: 'pointer',
-                flexShrink: 0,
-              }}
-            >
-              <div
-                style={{
-                  width: '20px',
-                  height: '20px',
-                  borderRadius: '50%',
-                  backgroundColor: '#F8F9FA',
-                  position: 'absolute',
-                  top: '3px',
-                  left: integrationSettings.enabled ? '21px' : '3px',
-                  transition: 'left 0.2s',
-                }}
-              />
-            </button>
+          <div className="flex items-center gap-3 mb-3">
+            <Plug size={16} color="#6C757D" />
+            <p style={sectionLabelStyle}>CONNECTED APPS</p>
           </div>
-
-          {integrationSettings.enabled ? (
-            <div>
-              <p style={rowSubStyle}>
-                Completing a task or project in LearningAI auto-completes this routine and feeds its XP, streak, and momentum.
-              </p>
-              <select
-                value={linkedRoutineId}
-                onChange={(e) =>
-                  onChangeIntegrationSettings((prev) => ({ ...prev, learningaiRoutineIds: [e.target.value] }))
-                }
-                style={{ width: '100%', marginTop: '10px', backgroundColor: '#0A0A0F', border: '1px solid #1E1E2E', borderRadius: '8px', padding: '10px', fontSize: '14px', color: '#F8F9FA', fontFamily: 'Inter, sans-serif' }}
-              >
-                {skillsRoutines.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.title}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ) : (
-            <p style={rowSubStyle}>
-              Link a Skills &amp; Learning routine to your LearningAI progress.
-            </p>
-          )}
+          <ConnectedAppsPanel session={auth.session} routines={routines} />
         </div>
       )}
 
@@ -325,14 +486,9 @@ export function Settings({
         >
           <div
             style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '10px',
-              backgroundColor: '#4CC9F020',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
+              width: '40px', height: '40px', borderRadius: '10px',
+              backgroundColor: '#4CC9F020', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', flexShrink: 0,
             }}
           >
             <Download size={18} color="#4CC9F0" />
@@ -341,9 +497,7 @@ export function Settings({
             <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '15px', fontWeight: 500, color: '#F8F9FA' }}>
               Export Data
             </p>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', color: '#6C757D', marginTop: '1px' }}>
-              Download backup JSON file
-            </p>
+            <p style={rowSubStyle}>Download backup JSON file</p>
           </div>
         </button>
       </div>
@@ -363,14 +517,9 @@ export function Settings({
         >
           <div
             style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '10px',
-              backgroundColor: '#06D6A020',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
+              width: '40px', height: '40px', borderRadius: '10px',
+              backgroundColor: '#06D6A020', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', flexShrink: 0,
             }}
           >
             <Upload size={18} color="#06D6A0" />
@@ -379,9 +528,7 @@ export function Settings({
             <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '15px', fontWeight: 500, color: '#F8F9FA' }}>
               Import Data
             </p>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', color: '#6C757D', marginTop: '1px' }}>
-              Restore from backup JSON
-            </p>
+            <p style={rowSubStyle}>Restore from backup JSON</p>
           </div>
         </button>
         {importError && (
@@ -416,14 +563,9 @@ export function Settings({
           >
             <div
               style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '10px',
-                backgroundColor: '#E6394620',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
+                width: '40px', height: '40px', borderRadius: '10px',
+                backgroundColor: '#E6394620', display: 'flex', alignItems: 'center',
+                justifyContent: 'center', flexShrink: 0,
               }}
             >
               <Trash2 size={18} color="#E63946" />
@@ -432,9 +574,7 @@ export function Settings({
               <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '15px', fontWeight: 500, color: '#E63946' }}>
                 Reset All Data
               </p>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', color: '#6C757D', marginTop: '1px' }}>
-                Wipes everything — cannot undo
-              </p>
+              <p style={rowSubStyle}>Wipes everything — cannot undo</p>
             </div>
           </button>
         )}
@@ -451,30 +591,14 @@ export function Settings({
               <button
                 onClick={cancelReset}
                 className="flex-1 rounded-lg py-3"
-                style={{
-                  backgroundColor: '#1E1E2E',
-                  color: '#F8F9FA',
-                  fontFamily: 'Inter, sans-serif',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  minHeight: '44px',
-                  border: 'none',
-                }}
+                style={{ backgroundColor: '#1E1E2E', color: '#F8F9FA', fontFamily: 'Inter, sans-serif', fontSize: '14px', fontWeight: 500, minHeight: '44px', border: 'none' }}
               >
                 Cancel
               </button>
               <button
                 onClick={handleReset}
                 className="flex-1 rounded-lg py-3"
-                style={{
-                  backgroundColor: '#E6394620',
-                  color: '#E63946',
-                  fontFamily: 'Inter, sans-serif',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  minHeight: '44px',
-                  border: '1px solid #E63946',
-                }}
+                style={{ backgroundColor: '#E6394620', color: '#E63946', fontFamily: 'Inter, sans-serif', fontSize: '14px', fontWeight: 600, minHeight: '44px', border: '1px solid #E63946' }}
               >
                 Continue
               </button>
@@ -494,32 +618,16 @@ export function Settings({
               placeholder="RESET"
               autoFocus
               style={{
-                width: '100%',
-                backgroundColor: '#0A0A0F',
-                border: '1px solid #E63946',
-                borderRadius: '8px',
-                padding: '12px',
-                fontSize: '16px',
-                color: '#E63946',
-                fontFamily: '"Bebas Neue", sans-serif',
-                letterSpacing: '0.1em',
-                outline: 'none',
-                marginBottom: '12px',
+                width: '100%', backgroundColor: '#0A0A0F', border: '1px solid #E63946',
+                borderRadius: '8px', padding: '12px', fontSize: '16px', color: '#E63946',
+                fontFamily: '"Bebas Neue", sans-serif', letterSpacing: '0.1em', outline: 'none', marginBottom: '12px',
               }}
             />
             <div className="flex gap-2">
               <button
                 onClick={cancelReset}
                 className="flex-1 rounded-lg py-3"
-                style={{
-                  backgroundColor: '#1E1E2E',
-                  color: '#F8F9FA',
-                  fontFamily: 'Inter, sans-serif',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  minHeight: '44px',
-                  border: 'none',
-                }}
+                style={{ backgroundColor: '#1E1E2E', color: '#F8F9FA', fontFamily: 'Inter, sans-serif', fontSize: '14px', fontWeight: 500, minHeight: '44px', border: 'none' }}
               >
                 Cancel
               </button>
@@ -527,16 +635,10 @@ export function Settings({
                 onClick={handleReset}
                 disabled={resetInput !== 'RESET'}
                 style={{
-                  flex: 1,
-                  borderRadius: '8px',
-                  padding: '12px',
+                  flex: 1, borderRadius: '8px', padding: '12px',
                   backgroundColor: resetInput === 'RESET' ? '#E63946' : '#1E1E2E',
                   color: resetInput === 'RESET' ? '#0A0A0F' : '#6C757D',
-                  fontFamily: 'Inter, sans-serif',
-                  fontSize: '14px',
-                  fontWeight: 700,
-                  minHeight: '44px',
-                  border: 'none',
+                  fontFamily: 'Inter, sans-serif', fontSize: '14px', fontWeight: 700, minHeight: '44px', border: 'none',
                   cursor: resetInput === 'RESET' ? 'pointer' : 'default',
                 } as React.CSSProperties}
               >
@@ -554,16 +656,12 @@ export function Settings({
       >
         <div className="flex items-center gap-3 mb-3">
           <Info size={16} color="#6C757D" />
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '13px', color: '#6C757D', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            ABOUT
-          </p>
+          <p style={sectionLabelStyle}>ABOUT</p>
         </div>
         <p
           style={{
             fontFamily: '"Bebas Neue", sans-serif',
-            fontSize: '22px',
-            color: '#E63946',
-            letterSpacing: '0.1em',
+            fontSize: '22px', color: '#E63946', letterSpacing: '0.1em',
           }}
         >
           GRIND OS
