@@ -7,6 +7,7 @@ import { Stats } from './pages/Stats';
 import { LevelUp } from './pages/LevelUp';
 import { Settings } from './pages/Settings';
 import { TimeDesign } from './pages/TimeDesign';
+import { LearningProgress } from './pages/LearningProgress';
 import { AuthGate } from './components/AuthGate';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useDailyLog } from './hooks/useDailyLog';
@@ -211,6 +212,8 @@ export default function App() {
         return <LevelUp profile={profile} logs={logs} routines={routines} />;
       case 'time':
         return <TimeDesign />;
+      case 'learn':
+        return <LearningProgress session={auth.session} />;
       case 'settings':
         return (
           <Settings

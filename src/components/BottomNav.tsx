@@ -1,4 +1,4 @@
-import { Home, Grid, BarChart2, Trophy, Settings, Clock, type LucideIcon } from 'lucide-react';
+import { Home, Grid, BarChart2, Trophy, Settings, Clock, BookOpen, type LucideIcon } from 'lucide-react';
 import { TabName } from '../types';
 
 interface BottomNavProps {
@@ -11,6 +11,7 @@ const TABS: { id: TabName; label: string; Icon: LucideIcon }[] = [
   { id: 'pillars', label: 'Pillars', Icon: Grid },
   { id: 'time', label: 'Time', Icon: Clock },
   { id: 'stats', label: 'Stats', Icon: BarChart2 },
+  { id: 'learn', label: 'Learn', Icon: BookOpen },
   { id: 'levelup', label: 'Level Up', Icon: Trophy },
   { id: 'settings', label: 'Settings', Icon: Settings },
 ];
