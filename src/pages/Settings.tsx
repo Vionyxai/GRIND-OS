@@ -10,7 +10,6 @@ interface AuthState {
   session: Session | null;
   loading: boolean;
   configured: boolean;
-  signInWithEmail: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -275,21 +274,7 @@ export function Settings({
   const [resetInput, setResetInput] = useState('');
   const [importError, setImportError] = useState('');
   const [importSuccess, setImportSuccess] = useState(false);
-  const [email, setEmail] = useState('');
-  const [emailSent, setEmailSent] = useState(false);
-  const [authError, setAuthError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleSignIn = async () => {
-    if (!email) return;
-    try {
-      await auth.signInWithEmail(email);
-      setEmailSent(true);
-      setAuthError('');
-    } catch (err) {
-      setAuthError(err instanceof Error ? err.message : 'Failed to send link');
-    }
-  };
 
   const handleExport = () => {
     const data = exportAllData();
@@ -372,31 +357,8 @@ export function Settings({
                 <LogOut size={14} /> Sign out
               </button>
             </div>
-          ) : emailSent ? (
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '13px', color: '#06D6A0' }}>
-              Check {email} for a magic link.
-            </p>
           ) : (
-            <div className="flex flex-col gap-2">
-              <p style={rowSubStyle}>Sign in to sync across devices and connect other apps.</p>
-              <div className="flex gap-2">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@email.com"
-                  style={{ flex: 1, backgroundColor: '#0A0A0F', border: '1px solid #1E1E2E', borderRadius: '8px', padding: '10px', fontSize: '14px', color: '#F8F9FA', fontFamily: 'Inter, sans-serif', outline: 'none' }}
-                />
-                <button
-                  onClick={handleSignIn}
-                  disabled={!email}
-                  style={{ borderRadius: '8px', padding: '10px 14px', backgroundColor: '#4CC9F0', color: '#0A0A0F', fontFamily: 'Inter, sans-serif', fontSize: '13px', fontWeight: 700, border: 'none', cursor: email ? 'pointer' : 'default', opacity: email ? 1 : 0.6 }}
-                >
-                  Send link
-                </button>
-              </div>
-              {authError && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', color: '#E63946' }}>{authError}</p>}
-            </div>
+            <p style={rowSubStyle}>Signing in automatically...</p>
           )}
         </div>
       )}
