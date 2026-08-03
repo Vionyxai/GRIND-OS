@@ -11,6 +11,13 @@ interface PhaseData {
   pct: number;
 }
 
+interface TaskItem {
+  id: string;
+  title: string;
+  hours: number;
+  done: boolean;
+}
+
 interface LearningStats {
   tasks_completed: number;
   tasks_total: number;
@@ -28,6 +35,8 @@ interface LearningStats {
   streak: number;
   best_streak: number;
   phases: PhaseData[];
+  current_phase_tasks?: TaskItem[];
+  current_phase_projects?: TaskItem[];
 }
 
 const PHASE_SHORT: Record<string, string> = {
@@ -178,6 +187,126 @@ export function LearningProgress({ session }: { session: Session | null }) {
         <Bar pct={stats.overall_pct} color={GREEN} height={8} />
         <div style={{ marginTop: '6px', fontSize: '11px', color: MUTED }}>overall curriculum complete</div>
       </div>
+
+      {/* Current Phase section */}
+      {(() => {
+        const tasks = stats.current_phase_tasks ?? [];
+        const projects = stats.current_phase_projects ?? [];
+        if (tasks.length === 0 && projects.length === 0) return null;
+
+        const allItems = [...tasks, ...projects];
+        const doneCount = allItems.filter((i) => i.done).length;
+        const totalCount = allItems.length;
+        const hoursLeft = allItems.filter((i) => !i.done).reduce((s, i) => s + i.hours, 0);
+        const phasePct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
+
+        const currentPhase = (stats.phases ?? []).find((p) => p.id === stats.current_phase_id);
+
+        return (
+          <div style={{ backgroundColor: CARD, border: `1px solid ${BORDER}`, borderRadius: '12px', padding: '16px' }}>
+            {/* Phase header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+              <SectionLabel text={`Phase ${currentPhase?.n ?? ''} · ${stats.current_phase_title}`} />
+              <div style={{ fontSize: '11px', color: MUTED, marginBottom: '10px' }}>
+                {doneCount}/{totalCount} items
+              </div>
+            </div>
+            <Bar pct={phasePct} color={BLUE} height={5} />
+            <div style={{ fontSize: '11px', color: MUTED, marginTop: '5px', marginBottom: '14px' }}>
+              {hoursLeft}h remaining in this phase
+            </div>
+
+            {/* Tasks */}
+            {tasks.length > 0 && (
+              <div style={{ marginBottom: projects.length > 0 ? '12px' : 0 }}>
+                <div style={{ fontSize: '10px', color: MUTED, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '6px' }}>
+                  Tasks
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  {tasks.map((t) => (
+                    <div key={t.id} style={{
+                      display: 'flex', alignItems: 'center', gap: '10px',
+                      backgroundColor: TILE, borderRadius: '8px', padding: '8px 10px',
+                      border: `1px solid ${BORDER}`,
+                    }}>
+                      <div style={{
+                        width: '16px', height: '16px', borderRadius: '50%', flexShrink: 0,
+                        backgroundColor: t.done ? `${GREEN}20` : 'transparent',
+                        border: `2px solid ${t.done ? GREEN : MUTED}`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        {t.done && <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: GREEN }} />}
+                      </div>
+                      <div style={{
+                        flex: 1, fontSize: '12px', color: t.done ? MUTED : WHITE,
+                        textDecoration: t.done ? 'line-through' : 'none',
+                        lineHeight: 1.3,
+                      }}>
+                        {t.title}
+                      </div>
+                      <div style={{
+                        fontSize: '10px', fontWeight: 700, color: MUTED,
+                        backgroundColor: BORDER, borderRadius: '4px', padding: '2px 5px',
+                        flexShrink: 0,
+                      }}>
+                        {t.hours}h
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Projects */}
+            {projects.length > 0 && (
+              <div>
+                <div style={{ fontSize: '10px', color: MUTED, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '6px' }}>
+                  Projects
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  {projects.map((pr) => (
+                    <div key={pr.id} style={{
+                      display: 'flex', alignItems: 'center', gap: '10px',
+                      backgroundColor: TILE, borderRadius: '8px', padding: '8px 10px',
+                      border: `1px solid ${BORDER}`,
+                    }}>
+                      <div style={{
+                        width: '16px', height: '16px', borderRadius: '50%', flexShrink: 0,
+                        backgroundColor: pr.done ? `${GREEN}20` : 'transparent',
+                        border: `2px solid ${pr.done ? GREEN : MUTED}`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        {pr.done && <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: GREEN }} />}
+                      </div>
+                      <div style={{
+                        flex: 1, fontSize: '12px', color: pr.done ? MUTED : WHITE,
+                        textDecoration: pr.done ? 'line-through' : 'none',
+                        lineHeight: 1.3,
+                      }}>
+                        {pr.title}
+                      </div>
+                      <div style={{
+                        fontSize: '10px', fontWeight: 700, color: MUTED,
+                        backgroundColor: BORDER, borderRadius: '4px', padding: '2px 5px',
+                        flexShrink: 0,
+                      }}>
+                        {pr.hours}h
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Footer summary */}
+            <div style={{ marginTop: '12px', padding: '8px 10px', backgroundColor: `${YELLOW}10`, borderRadius: '8px', border: `1px solid ${YELLOW}30` }}>
+              <div style={{ fontSize: '11px', color: YELLOW, fontWeight: 600 }}>
+                {allItems.filter((i) => !i.done).length} items left · {hoursLeft}h remaining in this phase
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* 4-tile stats row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
