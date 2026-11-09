@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import type { CSSProperties } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabaseClient';
 
@@ -100,13 +101,13 @@ export function LearningProgress({ session }: { session: Session | null }) {
       .eq('app_id', 'learningai')
       .eq('user_id', session.user.id)
       .single()
-      .then(({ data }) => {
-        setStats((data?.stats as LearningStats) ?? null);
+      .then(({ data, error }) => {
+        if (!error) setStats((data?.stats as LearningStats) ?? null);
         setLoading(false);
       });
   }, [session]);
 
-  const wrapStyle: React.CSSProperties = { padding: '20px 16px 8px', fontFamily: 'Inter, sans-serif' };
+  const wrapStyle: CSSProperties = { padding: '20px 16px 8px', fontFamily: 'Inter, sans-serif' };
 
   if (!supabase || !session) {
     return (
