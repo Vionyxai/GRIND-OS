@@ -8,6 +8,7 @@ const KEYS = {
   TIME_CATEGORIES: 'grindos_time_categories_v2',
   INTEGRATION_SETTINGS: 'grindos_integration_settings',
   LEARNINGAI_DAILY_COUNTS: 'grindos_learningai_daily_counts',
+  PIN: 'grindos_pin',
 };
 
 export function getItem<T>(key: string, fallback: T): T {

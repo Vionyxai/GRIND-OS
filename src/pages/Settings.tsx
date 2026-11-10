@@ -1,5 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
-import { Download, Upload, Trash2, Info, Cloud, LogIn, LogOut, Plug, Plus, X } from 'lucide-react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { Download, Upload, Trash2, Info, Cloud, LogIn, LogOut, Plug, Plus, X, Lock } from 'lucide-react';
+import { KEYS } from '../utils/storage';
+import { clearPinSession } from '../components/AuthGate';
 import type { Session } from '@supabase/supabase-js';
 import { exportAllData, importAllData } from '../utils/storage';
 import type { SyncStatus, CloudConflict } from '../hooks/useCloudSync';
@@ -263,6 +265,58 @@ function ConnectedAppsPanel({ session, routines }: { session: Session; routines:
   );
 }
 
+const PIN_KEYPAD: string[][] = [
+  ['1', '2', '3'],
+  ['4', '5', '6'],
+  ['7', '8', '9'],
+  ['', '0', 'del'],
+];
+
+function MiniKeypad({ onKey }: { onKey: (k: string) => void }) {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginTop: '12px' }}>
+      {PIN_KEYPAD.flat().map((key, idx) => {
+        if (key === '') return <div key={idx} />;
+        return (
+          <button
+            key={idx}
+            onPointerDown={(e) => { e.preventDefault(); onKey(key); }}
+            style={{
+              height: '52px', borderRadius: '10px',
+              backgroundColor: '#0A0A0F', border: '1px solid #1E1E2E',
+              color: '#F8F9FA',
+              fontSize: key === 'del' ? '16px' : '20px',
+              fontFamily: key === 'del' ? 'Inter, sans-serif' : '"Bebas Neue", sans-serif',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              WebkitTapHighlightColor: 'transparent',
+              userSelect: 'none',
+            } as React.CSSProperties}
+          >
+            {key === 'del' ? '⌫' : key}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function PinDots({ value, error }: { value: string; error: boolean }) {
+  return (
+    <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', margin: '8px 0' }}>
+      {[0, 1, 2, 3].map((i) => (
+        <div
+          key={i}
+          style={{
+            width: '12px', height: '12px', borderRadius: '50%',
+            backgroundColor: error ? '#E63946' : i < value.length ? '#E63946' : '#1E1E2E',
+            transition: 'background-color 0.1s',
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 export function Settings({
   onDataReset,
   onDataImport,
@@ -275,6 +329,52 @@ export function Settings({
   const [importError, setImportError] = useState('');
   const [importSuccess, setImportSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // PIN state
+  const [storedPin, setStoredPin] = useState(() => localStorage.getItem(KEYS.PIN) ?? '');
+  const [pinMode, setPinMode] = useState<'idle' | 'enter-new' | 'confirm-new'>('idle');
+  const [pinInput, setPinInput] = useState('');
+  const [pinFirst, setPinFirst] = useState('');
+  const [pinError, setPinError] = useState(false);
+
+  const handlePinKey = useCallback((key: string) => {
+    if (pinError) return;
+    if (key === 'del') { setPinInput((p) => p.slice(0, -1)); return; }
+    setPinInput((prev) => {
+      const next = prev + key;
+      if (next.length < 4) return next;
+      // Got 4 digits
+      if (pinMode === 'enter-new') {
+        setPinFirst(next);
+        setPinInput('');
+        setPinMode('confirm-new');
+        return '';
+      }
+      if (pinMode === 'confirm-new') {
+        if (next === pinFirst) {
+          localStorage.setItem(KEYS.PIN, next);
+          setStoredPin(next);
+          sessionStorage.setItem('grindos_unlocked', 'true');
+          setPinMode('idle');
+          setPinInput('');
+          setPinFirst('');
+        } else {
+          setPinError(true);
+          setTimeout(() => { setPinError(false); setPinInput(''); }, 800);
+        }
+        return next;
+      }
+      return next;
+    });
+  }, [pinMode, pinFirst, pinError]);
+
+  const removePin = () => {
+    localStorage.removeItem(KEYS.PIN);
+    clearPinSession();
+    setStoredPin('');
+    setPinMode('idle');
+    setPinInput('');
+  };
 
   const handleExport = () => {
     const data = exportAllData();
@@ -432,6 +532,53 @@ export function Settings({
           <ConnectedAppsPanel session={auth.session} routines={routines} />
         </div>
       )}
+
+      {/* App PIN */}
+      <div className="rounded-xl overflow-hidden p-4" style={cardStyle}>
+        <div className="flex items-center gap-3 mb-3">
+          <Lock size={16} color="#6C757D" />
+          <p style={sectionLabelStyle}>APP PIN</p>
+        </div>
+
+        {pinMode === 'idle' ? (
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p style={rowLabelStyle}>{storedPin ? 'PIN enabled' : 'No PIN set'}</p>
+              <p style={rowSubStyle}>{storedPin ? 'App locks on each new browser session' : 'App opens freely without a PIN'}</p>
+            </div>
+            <div className="flex gap-2">
+              {storedPin && (
+                <button
+                  onClick={removePin}
+                  style={{ borderRadius: '8px', padding: '8px 12px', backgroundColor: '#E6394620', color: '#E63946', fontFamily: 'Inter, sans-serif', fontSize: '13px', border: '1px solid #E6394650', cursor: 'pointer' }}
+                >
+                  Remove
+                </button>
+              )}
+              <button
+                onClick={() => { setPinMode('enter-new'); setPinInput(''); setPinFirst(''); setPinError(false); }}
+                style={{ borderRadius: '8px', padding: '8px 12px', backgroundColor: '#1E1E2E', color: '#F8F9FA', fontFamily: 'Inter, sans-serif', fontSize: '13px', border: 'none', cursor: 'pointer' }}
+              >
+                {storedPin ? 'Change' : 'Set PIN'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '13px', color: '#6C757D', textAlign: 'center' as const, marginBottom: '4px' }}>
+              {pinMode === 'enter-new' ? 'Enter new PIN' : pinError ? 'PINs don\'t match — try again' : 'Confirm PIN'}
+            </p>
+            <PinDots value={pinInput} error={pinError} />
+            <MiniKeypad onKey={handlePinKey} />
+            <button
+              onClick={() => { setPinMode('idle'); setPinInput(''); setPinFirst(''); setPinError(false); }}
+              style={{ width: '100%', marginTop: '10px', borderRadius: '8px', padding: '10px', backgroundColor: 'transparent', color: '#6C757D', fontFamily: 'Inter, sans-serif', fontSize: '13px', border: 'none', cursor: 'pointer' }}
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Export */}
       <div
