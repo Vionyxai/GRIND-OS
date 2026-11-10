@@ -26,43 +26,65 @@ interface Article {
 
 const ARTICLES: Article[] = [
   {
-    id: 'grindos-setup',
-    tag: 'SETUP',
-    tagBg: '#E6394618',
-    tagColor: '#E63946',
-    title: 'Get the Most Out of GRIND OS',
-    summary: 'Connect LearningAI, understand your pillars, and build real momentum.',
+    id: 'personal-finance-101',
+    tag: 'FINANCE',
+    tagBg: '#4CC9F018',
+    tagColor: '#4CC9F0',
+    title: 'Personal Finance 101',
+    summary: 'The fundamentals most people were never taught — budgeting, debt, saving, and building wealth.',
     sections: [
       {
-        heading: 'What GRIND OS Is Built For',
-        body: 'GRIND OS is ADHD-friendly, mobile-first, and built around one screen at a time. The goal is not perfect tracking — it\'s consistent daily action. Five minutes a day, every day, beats two hours once a week. The app is designed to remove friction, not add it.',
+        heading: 'Why Most People Stay Broke',
+        body: 'It\'s not income — it\'s behavior. The Federal Reserve\'s 2022 Survey of Consumer Finances found the median American family has less than $8,000 in liquid savings. High earners go broke constantly. The core problem is spending without a plan. Personal finance is 80% behavior and 20% math. You don\'t need to be brilliant at numbers; you need a system you actually follow. The good news: the fundamentals are simple, and doing just a few things right puts you ahead of most people.',
       },
       {
-        heading: 'Your 6 Pillars',
-        body: 'Every routine you create maps to one of six pillars: Health & Body, Money & Business, Relationships, Mental / Spiritual, Skills & Learning, and Leisure & Play. These are the domains that matter. Start with 1–2 routines per pillar — don\'t overload the Today screen. You can always add more once the habit is locked in.',
+        heading: 'Build an Emergency Fund First',
+        body: 'Before investing or aggressively paying debt, you need 3–6 months of essential expenses in a high-yield savings account (HYSA). This is your financial shock absorber. Without it, one medical bill or job loss forces you onto a credit card at 20%+ interest, which wipes out months of progress. The CFPB and virtually every credentialed financial planner list this as step one. Keep it in a separate account so you don\'t accidentally spend it. Right now, HYSAs at online banks pay 4–5% APY — your emergency fund should at least keep up with inflation.',
       },
       {
-        heading: 'The Today Tab',
-        body: 'The Today tab is your daily cockpit. Open it once a day, tap each routine as you complete it. Streak and XP update in real time. Missing a day resets your current streak, but your best streak is saved forever. Don\'t obsess over the streak — the point is showing up, not gaming the number.',
+        heading: 'The 50/30/20 Budget',
+        body: 'Popularized by Senator Elizabeth Warren and her daughter in "All Your Worth" (2005) and backed by decades of household finance research: allocate 50% of after-tax income to needs (rent, food, utilities, minimum debt payments), 30% to wants (eating out, subscriptions, entertainment), and 20% to savings and extra debt payments. These aren\'t rigid rules — they\'re a diagnostic. If your needs exceed 60%, you either have an income problem or a lifestyle inflation problem. If you\'re saving less than 10%, that\'s the lever to pull first. Track one month of spending before adjusting anything.',
       },
       {
-        heading: 'Connecting LearningAI',
-        body: 'Once connected, every task you finish in LearningAI automatically checks off a GRIND OS routine — no manual logging required.',
-        steps: [
-          'Open LearningAI and sign in with the same email you use for GRIND OS.',
-          'LearningAI registers itself in GRIND OS automatically in the background.',
-          'In GRIND OS, go to Settings → Connected Apps and find LearningAI in the list.',
-          'Under LearningAI, choose which routine it should auto-complete (e.g. a "Study Session" routine in the Skills pillar).',
-          'Done. Every task completion in LearningAI now checks off that routine in GRIND OS and earns you XP.',
-        ],
+        heading: 'Debt: Avalanche vs. Snowball',
+        body: 'Two proven strategies. The avalanche method pays minimum on all debts, then throws every extra dollar at the highest-interest debt first — this is mathematically optimal and costs you the least total interest. The snowball method pays off the smallest balance first, regardless of rate — research by Remi Trudel at Boston University (2012, Journal of Marketing Research) found this method keeps more people on track because small wins build momentum. If you\'re disciplined, do avalanche. If you\'ve quit before, do snowball. Either beats making only minimum payments, which can keep you in debt for decades.',
       },
       {
-        heading: 'XP, Levels & Streaks',
-        body: 'Completing routines earns XP. The Level Up tab tracks your rank, total XP, and badges. Your daily streak is the number of consecutive days with at least one completion. Weekly streaks build real momentum — but treat the streak as a signal, not a prison. If you miss a day, start again immediately.',
+        heading: 'Invest in Index Funds, Not Individual Stocks',
+        body: 'S&P Dow Jones\'s SPIVA report has tracked actively managed funds for 20+ years. As of 2023, over 92% of active U.S. large-cap fund managers underperformed the S&P 500 index over a 20-year period. John Bogle, who founded Vanguard and invented the index fund, spent decades proving that low-cost index funds beat most professionals over time. The reason: lower fees compound in your favor. A 1% fee difference on a $100,000 portfolio over 30 years costs you roughly $100,000 in lost growth. Use your employer\'s 401(k) match first (it\'s a 50–100% instant return), then a Roth IRA, then taxable accounts.',
       },
       {
-        heading: 'Weekly Review',
-        body: 'Open the Stats tab every Sunday evening. It shows completion rates by pillar for the past 7 days. Use it to spot neglected pillars — not to judge yourself. If your Health pillar is at 20% and Skills is at 90%, you know where to shift focus next week. Adjust routines accordingly, then close the app and go live your life.',
+        heading: 'The One Rule That Changes Everything',
+        body: 'Pay yourself first. This means automatically transferring money to savings and investments the same day your paycheck arrives — before you can spend it. Research on automatic savings programs consistently shows they outperform willpower-based approaches. Set up automatic transfers in your bank or investment account. Even $50/month invested in a broad index fund from age 22 becomes roughly $200,000 by 65 at a 7% average annual return (a historically conservative estimate for diversified U.S. stock market returns). The habit matters more than the amount when you\'re starting out.',
+      },
+    ],
+    sources: [
+      {
+        title: 'Survey of Consumer Finances (2022)',
+        author: 'Federal Reserve',
+        url: 'https://www.federalreserve.gov/publications/files/scf23.pdf',
+      },
+      {
+        title: 'All Your Worth: The Ultimate Lifetime Money Plan',
+        author: 'Elizabeth Warren & Amelia Warren Tyagi',
+      },
+      {
+        title: 'Winning the Battle but Losing the War: The Psychology of Debt Management',
+        author: 'Remi Trudel — Journal of Marketing Research, 2012',
+      },
+      {
+        title: 'SPIVA U.S. Scorecard (Year-End 2023)',
+        author: 'S&P Dow Jones Indices',
+        url: 'https://www.spglobal.com/spdji/en/research-insights/spiva/',
+      },
+      {
+        title: 'The Little Book of Common Sense Investing',
+        author: 'John C. Bogle',
+      },
+      {
+        title: 'Consumer Financial Protection Bureau — Building an Emergency Fund',
+        author: 'CFPB',
+        url: 'https://www.consumerfinance.gov/an-essential-guide-to-building-an-emergency-fund/',
       },
     ],
   },
