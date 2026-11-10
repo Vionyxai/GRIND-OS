@@ -7,6 +7,12 @@ interface Section {
   steps?: string[];
 }
 
+interface Source {
+  title: string;
+  author?: string;
+  url?: string;
+}
+
 interface Article {
   id: string;
   tag: string;
@@ -15,6 +21,7 @@ interface Article {
   title: string;
   summary: string;
   sections: Section[];
+  sources?: Source[];
 }
 
 const ARTICLES: Article[] = [
@@ -153,6 +160,44 @@ function ArticleCard({ article }: { article: Article }) {
               )}
             </div>
           ))}
+
+          {/* Sources */}
+          {article.sources && article.sources.length > 0 && (
+            <div style={{ borderTop: `1px solid ${BORDER}`, paddingTop: '12px', marginTop: '4px' }}>
+              <p style={{
+                fontFamily: 'Inter, sans-serif',
+                fontSize: '10px',
+                fontWeight: 700,
+                color: MUTED,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                margin: '0 0 6px',
+              }}>
+                Sources
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                {article.sources.map((s, i) => (
+                  <div key={i} style={{ fontFamily: 'Inter, sans-serif', fontSize: '11px', lineHeight: 1.4, color: MUTED }}>
+                    {s.url ? (
+                      <a
+                        href={s.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: '#4CC9F0', textDecoration: 'none' }}
+                      >
+                        {s.title}
+                      </a>
+                    ) : (
+                      <span>{s.title}</span>
+                    )}
+                    {s.author && (
+                      <span style={{ color: '#2A2A3A' }}> · {s.author}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
